@@ -1,0 +1,3399 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#090512">
+    <title>Kl1ni SPAM — Telegram Mini App</title>
+    <!-- Официальный Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg: #090512;
+            --surface: #0f081d;
+            --card: #130b24;
+            --card-hover: #1b1033;
+            --input-bg: #0b0616;
+            --border: #2a1a4d;
+            --border-bright: #4c2d8a;
+            --accent: #8b5cf6;
+            --accent-bright: #a855f7;
+            --neon: #c084fc;
+            --pink: #ec4899;
+            --bubble: #2b1852;
+            --bubble-follow: #211240;
+            --text: #f5f3ff;
+            --muted: #9d8ec7;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #fb7185;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-top: env(safe-area-inset-top, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            min-height: 100%;
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(circle at 12% 0%, rgba(139, 92, 246, 0.18), transparent 42%),
+                radial-gradient(circle at 88% 15%, rgba(236, 72, 153, 0.10), transparent 38%);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.45;
+            overflow-x: hidden;
+        }
+
+        body {
+            padding-top: var(--safe-top);
+            padding-bottom: calc(82px + var(--safe-bottom));
+        }
+
+        /* Кастомный скроллбар */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #362163; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-bright); }
+
+        .hidden { display: none !important; }
+        .container { max-width: 1040px; margin: 0 auto; padding: 0 14px; }
+
+        /* ==================== ШАПКА ==================== */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background: rgba(15, 8, 29, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 0;
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6d28d9, #a855f7, #ec4899);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 18px rgba(168, 85, 247, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            flex-shrink: 0;
+        }
+
+        .brand-title-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .brand-title {
+            font-size: 16px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ffffff, #e9d5ff, #f5d0fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tg-user-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(139, 92, 246, 0.18);
+            border: 1px solid rgba(168, 85, 247, 0.35);
+            font-size: 11px;
+            font-weight: 600;
+            color: #e9d5ff;
+            max-width: 145px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tg-avatar-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .brand-sub {
+            font-size: 11px;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 7px 10px;
+            border-radius: 11px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: #e9d5ff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        .icon-btn:hover, .icon-btn:active {
+            background: var(--card-hover);
+            border-color: var(--border-bright);
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #e879f9;
+            box-shadow: 0 0 8px #e879f9;
+        }
+
+        /* ==================== КАРТОЧКИ И СЕТКИ ==================== */
+        .main-content { padding-top: 14px; }
+
+        .tab-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            animation: fadeSlide 0.2s ease-out;
+        }
+
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 15px;
+            box-shadow: 0 8px 24px rgba(4, 2, 10, 0.35);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .two-col-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        @media (min-width: 860px) {
+            .two-col-grid {
+                grid-template-columns: 1.08fr 0.92fr;
+                align-items: start;
+            }
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        @media (min-width: 560px) {
+            .grid-2 { grid-template-columns: 1fr 1fr; }
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        @media (min-width: 560px) {
+            .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        /* ==================== ФОРМЫ И КНОПКИ ==================== */
+        input[type="text"],
+        input[type="url"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 9px 11px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-bright);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+        }
+
+        textarea {
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        input[type="checkbox"] {
+            width: 17px;
+            height: 17px;
+            accent-color: var(--accent-bright);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 9px 13px;
+            border-radius: 11px;
+            border: 1px solid transparent;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            text-decoration: none;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+        }
+        .btn-primary:hover { filter: brightness(1.08); }
+
+        .btn-launch {
+            width: 100%;
+            padding: 15px 20px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            color: #fff;
+            font-size: 15px;
+            font-weight: 800;
+            box-shadow: 0 8px 28px rgba(168, 85, 247, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+        }
+        .btn-launch:hover { filter: brightness(1.07); }
+
+        .btn-soft {
+            background: rgba(139, 92, 246, 0.16);
+            border-color: rgba(168, 85, 247, 0.32);
+            color: #e9d5ff;
+        }
+        .btn-soft:hover { background: rgba(139, 92, 246, 0.26); color: #fff; }
+
+        .btn-dark {
+            background: var(--input-bg);
+            border-color: var(--border);
+            color: #d8b4fe;
+        }
+        .btn-dark:hover { border-color: var(--border-bright); color: #fff; }
+
+        .btn-danger {
+            background: rgba(244, 63, 94, 0.14);
+            border-color: rgba(244, 63, 94, 0.35);
+            color: #fda4af;
+        }
+
+        .btn-amber {
+            background: rgba(245, 158, 11, 0.14);
+            border-color: rgba(245, 158, 11, 0.35);
+            color: #fcd34d;
+        }
+
+        /* ==================== БЛОКИ КОНСТРУКТОРА ==================== */
+        .sub-box {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 11px;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .status-pill {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #1a0f33;
+            color: var(--muted);
+            border: 1px solid var(--border);
+        }
+
+        .status-pill.on {
+            background: rgba(168, 85, 247, 0.22);
+            color: #f0abfc;
+            border-color: rgba(192, 132, 252, 0.45);
+        }
+
+        .toolbar-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 6px;
+        }
+
+        .tool-chip {
+            padding: 5px 9px;
+            border-radius: 8px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: #f3e8ff;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .tool-chip:hover { background: var(--card-hover); border-color: var(--accent); }
+        .tool-chip.var {
+            background: rgba(236, 72, 153, 0.14);
+            border-color: rgba(236, 72, 153, 0.35);
+            color: #f9a8d4;
+            font-size: 11px;
+        }
+
+        /* Drag & Drop зона загрузки баннера */
+        .drop-zone {
+            border: 1.5px dashed var(--border-bright);
+            border-radius: 12px;
+            padding: 14px 10px;
+            text-align: center;
+            background: rgba(139, 92, 246, 0.06);
+            cursor: pointer;
+            transition: 0.18s;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--neon);
+            background: rgba(168, 85, 247, 0.16);
+        }
+
+        .banner-presets-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+        }
+
+        .banner-swatch-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 4px;
+            border-radius: 9px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: #e9d5ff;
+            font-size: 9px;
+            cursor: pointer;
+        }
+        .banner-swatch-btn.active {
+            border-color: #e879f9;
+            background: rgba(168, 85, 247, 0.22);
+        }
+        .banner-swatch-color {
+            width: 100%;
+            height: 20px;
+            border-radius: 5px;
+        }
+
+        /* ==================== ЖИВОЕ ПРЕВЬЮ TELEGRAM ==================== */
+        .tg-preview-stage {
+            background-color: #0b0617;
+            background-image:
+                radial-gradient(rgba(168, 85, 247, 0.16) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(28, 16, 56, 0.5) 0%, rgba(9, 5, 18, 0.92) 100%);
+            background-size: 18px 18px, 100% 100%;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 14px;
+            min-height: 320px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .tg-msg-wrap {
+            width: 100%;
+            max-width: 340px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tg-bubble {
+            background: var(--bubble);
+            border: 1px solid rgba(192, 132, 252, 0.24);
+            border-radius: 16px 16px 4px 16px;
+            padding: 8px;
+            box-shadow: 0 8px 22px rgba(5, 2, 14, 0.55);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .tg-banner-box {
+            border-radius: 11px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            background: #140b29;
+        }
+
+        .tg-banner-img {
+            display: block;
+            width: 100%;
+            max-height: 190px;
+            object-fit: cover;
+        }
+
+        .tg-gen-banner {
+            width: 100%;
+            height: 136px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .tg-text-body {
+            padding: 2px 4px;
+            font-size: 13px;
+            line-height: 1.48;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: #f5f3ff;
+        }
+
+        .tg-text-body a {
+            color: #f0abfc;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+
+        .tg-text-body code {
+            background: rgba(0, 0, 0, 0.38);
+            padding: 1px 5px;
+            border-radius: 5px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 12px;
+            color: #f5d0fe;
+        }
+
+        .tg-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            font-size: 10px;
+            color: rgba(233, 213, 255, 0.72);
+            margin-top: 4px;
+            padding-right: 2px;
+        }
+
+        .tg-inline-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 5px;
+            margin-top: 6px;
+        }
+        .tg-inline-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+
+        .tg-inline-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px 10px;
+            border-radius: 11px;
+            background: rgba(35, 20, 68, 0.94);
+            border: 1px solid rgba(192, 132, 252, 0.28);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            transition: 0.15s;
+        }
+        .tg-inline-btn:hover { background: rgba(139, 92, 246, 0.35); }
+
+        /* ==================== ПРОГРЕСС-БАР И ЧАТЫ ==================== */
+        .progress-track {
+            width: 100%;
+            height: 9px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #7c3aed, #a855f7, #ec4899);
+            transition: width 0.3s ease;
+        }
+
+        .chips-scroll {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .filter-chip {
+            padding: 6px 11px;
+            border-radius: 11px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: 0.15s;
+        }
+        .filter-chip.active {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 3px 12px rgba(139, 92, 246, 0.35);
+        }
+
+        .folder-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 11px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .folder-pill.active {
+            border-color: var(--accent-bright);
+            background: rgba(168, 85, 247, 0.18);
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 11px;
+            border-radius: 14px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: 0.16s;
+        }
+        .chat-item.selected {
+            border-color: rgba(168, 85, 247, 0.72);
+            background: rgba(139, 92, 246, 0.11);
+        }
+        .chat-item:hover { border-color: var(--border-bright); }
+
+        .tag-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: rgba(139, 92, 246, 0.18);
+            color: #e9d5ff;
+            border: 1px solid rgba(168, 85, 247, 0.28);
+        }
+        .tag-badge.folder {
+            background: rgba(236, 72, 153, 0.15);
+            color: #fbcfe8;
+            border-color: rgba(236, 72, 153, 0.32);
+        }
+
+        /* ==================== НИЖНЯЯ НАВИГАЦИЯ ==================== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 35;
+            background: rgba(15, 8, 29, 0.95);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-top: 1px solid var(--border);
+            padding: 6px 8px calc(6px + var(--safe-bottom));
+        }
+
+        .nav-grid {
+            max-width: 1040px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            padding: 6px 4px;
+            border-radius: 12px;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            position: relative;
+            transition: 0.16s;
+        }
+
+        .nav-item.active {
+            color: #f0abfc;
+            background: rgba(168, 85, 247, 0.16);
+        }
+
+        .nav-badge {
+            position: absolute;
+            top: 2px;
+            right: calc(50% - 22px);
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 1px 5px;
+            border-radius: 999px;
+        }
+
+        /* ==================== МОДАЛЬНЫЕ ОКНА И ТОСТЫ ==================== */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(4, 2, 10, 0.78);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-card {
+            background: var(--surface);
+            border: 1px solid var(--border-bright);
+            border-radius: 18px;
+            padding: 18px;
+            width: 100%;
+            max-width: 410px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast-stack {
+            position: fixed;
+            top: calc(12px + var(--safe-top));
+            right: 12px;
+            left: 12px;
+            max-width: 360px;
+            margin-left: auto;
+            z-index: 60;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: none;
+        }
+
+        .toast-msg {
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 13px;
+            border-radius: 12px;
+            background: rgba(23, 13, 44, 0.96);
+            border: 1px solid var(--border-bright);
+            color: #f5f3ff;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            animation: fadeSlide 0.22s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Уведомления -->
+    <div id="toastContainer" class="toast-stack"></div>
+
+    <!-- ==================== ШАПКА ПРИЛОЖЕНИЯ ==================== -->
+    <header class="app-header">
+        <div class="container header-inner">
+            <div class="brand-box">
+                <div class="brand-logo">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#ffffff">
+                        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                    </svg>
+                </div>
+                <div style="min-width:0;">
+                    <div class="brand-title-row">
+                        <span class="brand-title">Kl1ni SPAM</span>
+                        <span class="tg-user-pill" id="tgUserPill">
+                            <span class="tg-avatar-dot" id="tgUserAvatar">K</span>
+                            <span id="tgUserName">Telegram</span>
+                        </span>
+                    </div>
+                    <div class="brand-sub">Личный комбайн рассылок в Telegram</div>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button type="button" class="icon-btn" id="soundToggleBtn" onclick="toggleSound()" title="Звуковое уведомление">
+                    <span id="soundIcon">🔔</span>
+                </button>
+                <button type="button" class="icon-btn" onclick="openModal('backupModal')" title="Резервная копия JSON">
+                    <span>💾</span>
+                    <span class="hide-xs">Бэкап</span>
+                </button>
+                <button type="button" class="icon-btn" onclick="switchTab('chats')">
+                    <span class="pulse-dot"></span>
+                    <span id="headerSelectedCount" style="color:#f0abfc;font-weight:800;">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== ОСНОВНОЙ КОНТЕНТ ==================== -->
+    <main class="container main-content">
+
+        <!-- ==================== ВКЛАДКА 1: РАССЫЛКА ==================== -->
+        <section id="tab-broadcast" class="tab-panel">
+
+            <!-- Панель активной рассылки -->
+            <div id="activeBroadcastCard" class="card hidden" style="border-color: rgba(192,132,252,0.65);">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="pulse-dot"></span>
+                        <span id="broadcastStatusTitle">Рассылка выполняется...</span>
+                    </div>
+                    <span id="broadcastProgressCount" class="status-pill on">0 / 0</span>
+                </div>
+
+                <div class="progress-track" style="margin-bottom:10px;">
+                    <div id="broadcastProgressBar" class="progress-fill"></div>
+                </div>
+
+                <div class="sub-box" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
+                    <span id="broadcastCurrentAction" style="font-size:12px;color:#f3e8ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Подготовка очереди...</span>
+                    <span id="broadcastCountdown" style="font-family:monospace;font-weight:800;color:#f0abfc;font-size:12px;flex-shrink:0;"></span>
+                </div>
+
+                <div id="liveStreamLog" class="sub-box" style="max-height:125px;overflow-y:auto;font-family:monospace;font-size:11px;display:flex;flex-direction:column;gap:4px;margin-bottom:10px;"></div>
+
+                <div class="grid-2">
+                    <button type="button" id="pauseResumeBtn" onclick="togglePauseBroadcast()" class="btn btn-amber">⏸ Пауза</button>
+                    <button type="button" onclick="stopBroadcast()" class="btn btn-danger">⏹ Стоп</button>
+                </div>
+            </div>
+
+            <!-- Библиотека шаблонов -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📋 Мои шаблоны постов</div>
+                    <button type="button" onclick="openSavePresetModal()" class="btn btn-soft" style="padding:5px 10px;font-size:11px;">+ Сохранить текущий</button>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <select id="presetSelect" onchange="applySelectedPreset()" style="flex:1;"></select>
+                    <button type="button" onclick="deleteCurrentPreset()" class="btn btn-dark" style="flex-shrink:0;">Удалить</button>
+                </div>
+            </div>
+
+            <!-- Двухколоночная сетка: Конструктор + Реальное превью -->
+            <div class="two-col-grid">
+
+                <!-- ЛЕВАЯ КОЛОНКА: КОНСТРУКТОР -->
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+                        <div class="card-header" style="margin-bottom:0;">
+                            <div class="card-title">✍️ Конструктор сообщения</div>
+                            <span id="charCounter" style="font-size:11px;color:var(--muted);">0 / 4096</span>
+                        </div>
+
+                        <!-- A/B-тест постов -->
+                        <div class="sub-box" style="display:flex;flex-direction:column;gap:8px;">
+                            <label class="toggle-row">
+                                <div style="display:flex;align-items:center;gap:9px;">
+                                    <input type="checkbox" id="abTestToggle" onchange="toggleAbTest()">
+                                    <div>
+                                        <div style="font-size:12px;font-weight:700;color:#fff;">🧪 A/B-тест постов</div>
+                                        <div style="font-size:11px;color:var(--muted);">Чередует Вариант А и Вариант Б по очереди</div>
+                                    </div>
+                                </div>
+                                <span id="abBadge" class="status-pill">Выкл</span>
+                            </label>
+                            <div id="abVariantTabs" class="grid-2 hidden">
+                                <button type="button" id="abTabBtnA" onclick="switchAbVariant('A')" class="btn btn-primary">Вариант А</button>
+                                <button type="button" id="abTabBtnB" onclick="switchAbVariant('B')" class="btn btn-dark">Вариант Б</button>
+                            </div>
+                        </div>
+
+                        <!-- 3-стилевой быстрый рерайтер -->
+                        <div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                                <span style="font-size:11px;font-weight:600;color:#d8b4fe;">✨ Быстрый рерайт в 1 клик:</span>
+                                <button type="button" id="undoRewriteBtn" onclick="undoRewrite()" class="hidden" style="background:none;border:none;color:#f0abfc;font-size:11px;cursor:pointer;text-decoration:underline;">↩ Вернуть исходный</button>
+                            </div>
+                            <div class="grid-3">
+                                <button type="button" onclick="rewriteTextStyle('business')" class="btn btn-dark" style="padding:7px 6px;font-size:11px;">💼 Деловой</button>
+                                <button type="button" onclick="rewriteTextStyle('casual')" class="btn btn-dark" style="padding:7px 6px;font-size:11px;">💬 Свойский</button>
+                                <button type="button" onclick="rewriteTextStyle('short')" class="btn btn-dark" style="padding:7px 6px;font-size:11px;">⚡ Короткий</button>
+                            </div>
+                        </div>
+
+                        <!-- Панель HTML-форматирования и переменных -->
+                        <div class="toolbar-row">
+                            <button type="button" onclick="insertHtmlTag('b')" class="tool-chip" title="Жирный">B</button>
+                            <button type="button" onclick="insertHtmlTag('i')" class="tool-chip" style="font-style:italic;" title="Курсив">I</button>
+                            <button type="button" onclick="insertHtmlTag('s')" class="tool-chip" style="text-decoration:line-through;" title="Зачёркнутый">S</button>
+                            <button type="button" onclick="insertHtmlTag('code')" class="tool-chip" style="font-family:monospace;" title="Код">&lt;/&gt;</button>
+                            <button type="button" onclick="openLinkInsertModal()" class="tool-chip" style="background:rgba(139,92,246,0.22);border-color:rgba(168,85,247,0.4);">🔗 HTML-ссылка</button>
+                            <button type="button" onclick="insertVariable('{chat_name}')" class="tool-chip var">+ {chat_name}</button>
+                            <button type="button" onclick="insertVariable('{greeting}')" class="tool-chip var">+ {greeting}</button>
+                        </div>
+
+                        <!-- Текстовое поле -->
+                        <textarea id="messageInput" rows="5" oninput="handleMessageInput()" placeholder="Напишите текст рассылки (поддерживается HTML: <b>жирный</b>, <i>курсив</i>, <a href='...'>ссылка</a>)..."></textarea>
+
+                        <!-- Живой индикатор проверки текста перед отправкой -->
+                        <div id="textSafetyCard" class="sub-box" style="border-color: rgba(52, 211, 153, 0.38);">
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
+                                <div style="display:flex;align-items:center;gap:7px;">
+                                    <span id="safetyStatusDot" style="width:9px;height:9px;border-radius:50%;background:var(--success);display:inline-block;"></span>
+                                    <span id="safetyStatusLabel" style="font-size:12px;font-weight:700;color:#6ee7b7;">Отлично проходит модерацию</span>
+                                </div>
+                                <span id="safetyMetricsSummary" style="font-size:10px;color:var(--muted);">Капс: 0% • Эмодзи: 0</span>
+                            </div>
+                            <div id="safetySuggestionsBox" class="hidden" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;">
+                                <div id="safetyAdviceText" style="font-size:11px;color:#fde68a;"></div>
+                                <div id="safetyChipsContainer" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- ГАЛОЧКА 1: ПРИКРЕПИТЬ БАННЕР (ФАЙЛ / URL / ГЕНЕРАТОР) -->
+                        <div class="sub-box" style="display:flex;flex-direction:column;gap:10px;">
+                            <label class="toggle-row">
+                                <div style="display:flex;align-items:center;gap:9px;">
+                                    <input type="checkbox" id="enableBannerToggle" onchange="toggleBannerSection()">
+                                    <div>
+                                        <div style="font-size:13px;font-weight:700;color:#fff;">🖼️ Прикрепить баннер</div>
+                                        <div style="font-size:11px;color:var(--muted);">Свой файл (JPG/PNG/GIF/WEBP), URL или генератор</div>
+                                    </div>
+                                </div>
+                                <span id="bannerBadge" class="status-pill">Выкл</span>
+                            </label>
+
+                            <div id="bannerControlsBox" class="hidden" style="padding-top:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;">
+                                <!-- Режимы источника баннера -->
+                                <div class="grid-3">
+                                    <button type="button" id="bannerSourceFileBtn" onclick="setBannerSourceMode('file')" class="btn btn-primary" style="padding:6px;font-size:11px;">📁 Свой файл</button>
+                                    <button type="button" id="bannerSourceUrlBtn" onclick="setBannerSourceMode('url')" class="btn btn-dark" style="padding:6px;font-size:11px;">🌐 По ссылке</button>
+                                    <button type="button" id="bannerSourceGenBtn" onclick="setBannerSourceMode('gen')" class="btn btn-dark" style="padding:6px;font-size:11px;">🎨 Генератор</button>
+                                </div>
+
+                                <!-- Режим 1: Загрузка файла с устройства / Drag & Drop -->
+                                <div id="bannerFileBox">
+                                    <div id="bannerDropZone" class="drop-zone" onclick="document.getElementById('bannerFileInput').click()">
+                                        <div style="font-size:12px;font-weight:700;color:#e9d5ff;">Нажмите или перетащите картинку сюда</div>
+                                        <div style="font-size:10px;color:var(--muted);margin-top:3px;">Поддерживаются JPG, PNG, GIF, WEBP</div>
+                                        <input type="file" id="bannerFileInput" accept="image/jpeg,image/png,image/gif,image/webp" onchange="handleBannerFileUpload(event)" class="hidden">
+                                    </div>
+                                    <div id="uploadedFileInfoRow" class="hidden" style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:11px;color:#6ee7b7;">
+                                        <span id="uploadedFileName">Файл загружен</span>
+                                        <button type="button" onclick="clearUploadedBanner()" class="btn btn-danger" style="padding:3px 8px;font-size:10px;">Убрать</button>
+                                    </div>
+                                </div>
+
+                                <!-- Режим 2: Прямая URL-ссылка на картинку -->
+                                <div id="bannerUrlBox" class="hidden" style="display:flex;flex-direction:column;gap:6px;">
+                                    <label style="font-size:11px;color:#d8b4fe;">Прямая ссылка на изображение (https://...):</label>
+                                    <input type="url" id="bannerDirectUrlInput" oninput="handleBannerDirectUrlInput()" placeholder="https://example.com/banner.jpg">
+                                </div>
+
+                                <!-- Режим 3: Генератор 6 фиолетовых градиентов -->
+                                <div id="bannerGenBox" class="hidden" style="display:flex;flex-direction:column;gap:8px;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                                        <span style="font-size:11px;color:#d8b4fe;">Выберите градиент фона:</span>
+                                        <button type="button" onclick="downloadGeneratedBannerPng()" style="background:none;border:none;color:#f0abfc;font-size:11px;font-weight:700;cursor:pointer;">⬇ Скачать PNG</button>
+                                    </div>
+                                    <div class="banner-presets-grid" id="bannerStyleGrid"></div>
+                                    <div>
+                                        <label style="font-size:11px;color:#d8b4fe;display:block;margin-bottom:4px;">Заголовок на баннере:</label>
+                                        <input type="text" id="bannerOverlayTextInput" oninput="handleBannerOverlayInput()" placeholder="ЗАПУСК ПРОЕКТА • 2026">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ГАЛОЧКА 2: ДОБАВИТЬ КНОПКИ СО ССЫЛКОЙ + UTM -->
+                        <div class="sub-box" style="display:flex;flex-direction:column;gap:10px;">
+                            <label class="toggle-row">
+                                <div style="display:flex;align-items:center;gap:9px;">
+                                    <input type="checkbox" id="enableButtonToggle" onchange="toggleButtonSection()">
+                                    <div>
+                                        <div style="font-size:13px;font-weight:700;color:#fff;">🔘 Добавить кнопки со ссылкой</div>
+                                        <div style="font-size:11px;color:var(--muted);">До 4 кнопок под постом + UTM-метки</div>
+                                    </div>
+                                </div>
+                                <span id="buttonBadge" class="status-pill">Выкл</span>
+                            </label>
+
+                            <div id="buttonControlsBox" class="hidden" style="padding-top:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+                                    <span style="color:#d8b4fe;">Раскладка кнопок:</span>
+                                    <div style="display:inline-flex;gap:4px;background:var(--card);padding:3px;border-radius:9px;border:1px solid var(--border);">
+                                        <button type="button" id="layoutColBtn" onclick="setButtonsLayout('col')" class="btn btn-primary" style="padding:4px 9px;font-size:11px;">В столбик</button>
+                                        <button type="button" id="layoutRowBtn" onclick="setButtonsLayout('row')" class="btn btn-dark" style="padding:4px 9px;font-size:11px;">В ряд</button>
+                                    </div>
+                                </div>
+
+                                <div id="inlineButtonsEditorList" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+                                <button type="button" id="addInlineBtnAction" onclick="addInlineButtonItem()" class="btn btn-soft" style="width:100%;">+ Добавить кнопку (макс. 4)</button>
+
+                                <!-- UTM-метки -->
+                                <div class="card" style="padding:9px;border-radius:11px;">
+                                    <label class="toggle-row">
+                                        <span style="font-size:12px;font-weight:600;color:#fff;">🏷 Добавлять UTM-метку к ссылкам</span>
+                                        <input type="checkbox" id="utmToggle" onchange="toggleUtmTags()">
+                                    </label>
+                                    <div id="utmPreviewBox" class="hidden" style="margin-top:6px;">
+                                        <div id="utmLiveUrlPreview" style="font-family:monospace;font-size:10px;color:#f0abfc;background:var(--input-bg);padding:6px 8px;border-radius:8px;border:1px solid var(--border);word-break:break-all;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ГАЛОЧКА 3: ПОСТ + БЫСТРЫЙ ДОЖИМ -->
+                        <div class="sub-box" style="display:flex;flex-direction:column;gap:10px;">
+                            <label class="toggle-row">
+                                <div style="display:flex;align-items:center;gap:9px;">
+                                    <input type="checkbox" id="followUpToggle" onchange="toggleFollowUpSection()">
+                                    <div>
+                                        <div style="font-size:13px;font-weight:700;color:#fff;">💬 Пост + быстрый дожим</div>
+                                        <div style="font-size:11px;color:var(--muted);">Второе короткое сообщение следом в чат</div>
+                                    </div>
+                                </div>
+                                <span id="followUpBadge" class="status-pill">Выкл</span>
+                            </label>
+
+                            <div id="followUpControlsBox" class="hidden" style="padding-top:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
+                                <div>
+                                    <label style="font-size:11px;color:#d8b4fe;display:block;margin-bottom:4px;">Текст второго сообщения:</label>
+                                    <input type="text" id="followUpTextInput" oninput="handleFollowUpInput()" placeholder="Если ссылка не открывается — пишите в ЛС!">
+                                </div>
+                                <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+                                    <span style="color:#d8b4fe;">Пауза после основного поста:</span>
+                                    <div style="display:flex;align-items:center;gap:6px;">
+                                        <input type="number" id="followUpDelayInput" min="3" max="180" value="15" oninput="handleFollowUpInput()" style="width:68px;text-align:center;">
+                                        <span style="color:var(--muted);">сек.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ПРАВАЯ КОЛОНКА: РЕАЛЬНОЕ ЖИВОЕ ПРЕВЬЮ TELEGRAM -->
+                <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+                    <div class="card-header" style="margin-bottom:0;">
+                        <div style="display:flex;align-items:center;gap:7px;">
+                            <span style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Предпросмотр в Telegram</span>
+                            <span id="previewVariantTag" class="status-pill on hidden">Вариант А</span>
+                        </div>
+                        <button type="button" onclick="copyRenderedMessage()" class="btn btn-soft" style="padding:5px 9px;font-size:11px;">📋 Скопировать пост</button>
+                    </div>
+
+                    <div class="tg-preview-stage">
+                        <!-- Основной пузырь поста -->
+                        <div class="tg-msg-wrap">
+                            <div class="tg-bubble">
+                                <!-- Баннер в превью -->
+                                <div id="previewBannerWrapper" class="tg-banner-box hidden">
+                                    <img id="previewRealImage" src="" alt="Баннер" class="tg-banner-img hidden" onerror="handlePreviewImgError()">
+                                    <div id="previewGeneratedBanner" class="tg-gen-banner">
+                                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                                            <span style="font-size:10px;font-weight:800;letter-spacing:0.08em;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,0.35);color:#f3e8ff;">KL1NI SPAM</span>
+                                            <span style="width:8px;height:8px;border-radius:50%;background:#f0abfc;"></span>
+                                        </div>
+                                        <div id="previewBannerOverlayTitle" style="font-size:17px;font-weight:900;color:#fff;line-height:1.2;">ЗАПУСК ПРОЕКТА</div>
+                                    </div>
+                                </div>
+
+                                <!-- HTML-текст поста -->
+                                <div id="previewText" class="tg-text-body">Ваш текст появится здесь...</div>
+
+                                <!-- Время доставки -->
+                                <div class="tg-meta-row">
+                                    <span id="previewTime">12:00</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f0abfc" stroke-width="2.2"><path d="M2 12l5 5L18 6M8 12l5 5L22 6"/></svg>
+                                </div>
+                            </div>
+
+                            <!-- Кликабельные inline-кнопки -->
+                            <div id="previewButtonsGrid" class="tg-inline-grid hidden"></div>
+                        </div>
+
+                        <!-- Второй пузырь: Быстрый дожим -->
+                        <div id="previewFollowUpWrapper" class="tg-msg-wrap hidden" style="max-width:295px;">
+                            <div id="previewFollowUpDelayBadge" style="font-size:10px;color:#f0abfc;text-align:right;margin-bottom:2px;">⏱ Через 15 сек.</div>
+                            <div class="tg-bubble" style="background:var(--bubble-follow);padding:8px 11px;">
+                                <div id="previewFollowUpText" style="font-size:12px;color:#f5f3ff;">Если ссылка не открывается — пишите в ЛС!</div>
+                                <div class="tg-meta-row">
+                                    <span id="previewFollowUpTimeTag">+15с</span>
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f0abfc" stroke-width="2.2"><path d="M2 12l5 5L18 6M8 12l5 5L22 6"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="font-size:11px;color:var(--muted);">
+                        Нажмите на кнопки или ссылки в превью, чтобы проверить переход в Telegram или браузере.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Блок Антиспам-ритма и расписания -->
+            <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+                <div class="card-title">🛡️ Антиспам-ритм и расписание</div>
+
+                <div class="grid-2">
+                    <div class="sub-box">
+                        <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:7px;">Случайная пауза между постами (сек.)</div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="flex:1;">
+                                <span style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px;">От</span>
+                                <input type="number" id="delayMinInput" min="3" max="600" value="20" onchange="saveSettings()">
+                            </div>
+                            <span style="color:var(--muted);padding-top:14px;">—</span>
+                            <div style="flex:1;">
+                                <span style="font-size:10px;color:var(--muted);display:block;margin-bottom:2px;">До</span>
+                                <input type="number" id="delayMaxInput" min="3" max="600" value="45" onchange="saveSettings()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sub-box">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-size:12px;font-weight:700;color:#fff;">Авто-отдых после серии</span>
+                            <input type="checkbox" id="cooldownToggle" checked onchange="saveSettings()">
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#d8b4fe;flex-wrap:wrap;">
+                            <span>Пауза</span>
+                            <input type="number" id="cooldownMinutesInput" min="1" max="120" value="10" onchange="saveSettings()" style="width:58px;text-align:center;padding:6px;">
+                            <span>мин. каждые</span>
+                            <input type="number" id="cooldownEveryInput" min="2" max="100" value="5" onchange="saveSettings()" style="width:58px;text-align:center;padding:6px;">
+                            <span>смс</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="sub-box">
+                        <label style="font-size:12px;font-weight:700;color:#fff;display:block;margin-bottom:6px;">Время запуска</label>
+                        <select id="scheduleModeSelect" onchange="saveSettings()">
+                            <option value="now">Запустить сразу после нажатия</option>
+                            <option value="delay_15">Отложенный запуск (через 15 минут)</option>
+                            <option value="loop_2h">Повторять автоматически каждые 2 часа</option>
+                            <option value="loop_4h">Повторять автоматически каждые 4 часа</option>
+                        </select>
+                    </div>
+
+                    <label class="sub-box toggle-row">
+                        <div>
+                            <div style="font-size:12px;font-weight:700;color:#fff;">Защита от повторов за 24 часа</div>
+                            <div style="font-size:11px;color:var(--muted);">Пропускать чаты, куда уже писали за сутки</div>
+                        </div>
+                        <input type="checkbox" id="skip24hToggle" checked onchange="saveSettings()">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Главная кнопка запуска -->
+            <button id="startBroadcastBtn" type="button" onclick="startBroadcast()" class="btn btn-launch">
+                🚀 <span id="startBtnText">Начать рассылку (0 чатов)</span>
+            </button>
+        </section>
+
+        <!-- ==================== ВКЛАДКА 2: БАЗА ЧАТОВ И МОИ ПАПКИ ==================== -->
+        <section id="tab-chats" class="tab-panel hidden">
+
+            <!-- Менеджер собственных папок ("Мои папки") -->
+            <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+                <div class="card-header" style="margin-bottom:0;">
+                    <div class="card-title">📁 Мои папки чатов</div>
+                    <button type="button" onclick="openCreateFolderModal()" class="btn btn-primary" style="padding:6px 11px;font-size:11px;">+ Создать папку</button>
+                </div>
+                <p style="font-size:11px;color:var(--muted);">Создавайте свои папки с иконками, фильтруйте по ним базу и выбирайте всю папку в один клик.</p>
+                <div id="myFoldersBar" class="chips-scroll"></div>
+            </div>
+
+            <!-- Добавление своего чата по ссылке + массовая вставка -->
+            <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+                <div class="card-header" style="margin-bottom:0;">
+                    <div class="card-title">➕ Добавить свой чат в базу</div>
+                    <div style="display:flex;gap:6px;">
+                        <button type="button" onclick="openBulkAddModal()" class="btn btn-soft" style="padding:5px 9px;font-size:11px;">📋 Вставить списком</button>
+                        <button type="button" onclick="exportChatsTxt('selected')" class="btn btn-dark" style="padding:5px 9px;font-size:11px;">⬇ .txt</button>
+                    </div>
+                </div>
+
+                <form onsubmit="addCustomChat(event)" style="display:grid;grid-template-columns:1fr;gap:8px;">
+                    <div class="grid-2">
+                        <input type="text" id="newChatHandleInput" placeholder="Ссылка https://t.me/..., @username или ID" required>
+                        <input type="text" id="newChatTitleInput" placeholder="Своё название чата (необязательно)">
+                    </div>
+                    <div class="grid-2">
+                        <select id="newChatFolderSelect"></select>
+                        <button type="submit" class="btn btn-primary">Сохранить чат</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Каталог публичных чатов + поиск + фильтры -->
+            <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+                <div class="card-header" style="margin-bottom:0;">
+                    <div>
+                        <div class="card-title">🗂️ База и каталог чатов Telegram</div>
+                        <div style="font-size:11px;color:var(--muted);">36 встроенных чатов по 6 нишам + ваши добавленные площадки</div>
+                    </div>
+                    <span id="catalogTotalCount" class="status-pill on">36 чатов</span>
+                </div>
+
+                <input type="text" id="chatSearchInput" oninput="renderChats()" placeholder="🔍 Поиск по названию, @username, папке или описанию...">
+
+                <!-- Фильтр по папкам / нишам / ЧС -->
+                <div id="nicheFilterBar" class="chips-scroll"></div>
+
+                <!-- Быстрые действия со списком -->
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <button type="button" onclick="selectFilteredChats(true)" style="background:none;border:none;color:#f0abfc;font-weight:700;cursor:pointer;">Выделить показанные</button>
+                        <span style="color:var(--border);">|</span>
+                        <button type="button" onclick="selectFilteredChats(false)" style="background:none;border:none;color:var(--muted);cursor:pointer;">Снять выделение</button>
+                    </div>
+                    <span id="filteredSelectedInfo" style="font-size:11px;color:#d8b4fe;font-weight:600;"></span>
+                </div>
+
+                <!-- Список чатов -->
+                <div id="chatsListContainer" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+        </section>
+
+        <!-- ==================== ВКЛАДКА 3: ЛОГИ ==================== -->
+        <section id="tab-logs" class="tab-panel hidden">
+            <div class="grid-3">
+                <div class="card">
+                    <div style="font-size:11px;color:var(--muted);">Обработано</div>
+                    <div id="statTotal" style="font-size:20px;font-weight:900;color:#fff;margin-top:4px;">0</div>
+                </div>
+                <div class="card">
+                    <div style="font-size:11px;color:var(--muted);">Успешно</div>
+                    <div id="statSuccess" style="font-size:20px;font-weight:900;color:var(--success);margin-top:4px;">0</div>
+                </div>
+                <div class="card">
+                    <div style="font-size:11px;color:var(--muted);">Пропуски / Ошибки</div>
+                    <div id="statErrors" style="font-size:20px;font-weight:900;color:var(--danger);margin-top:4px;">0</div>
+                </div>
+            </div>
+
+            <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+                <div class="card-header" style="margin-bottom:0;">
+                    <div class="card-title">📜 Журнал отправок</div>
+                    <div style="display:flex;gap:10px;font-size:12px;">
+                        <button type="button" onclick="exportChatsTxt('successful_logs')" style="background:none;border:none;color:#f0abfc;font-weight:600;cursor:pointer;">Скачать успешные (.txt)</button>
+                        <button type="button" onclick="clearLogs()" style="background:none;border:none;color:var(--danger);font-weight:600;cursor:pointer;">Очистить</button>
+                    </div>
+                </div>
+
+                <div class="chips-scroll">
+                    <button type="button" class="filter-chip active" id="logFilterAll" onclick="setLogFilter('all')">Все записи</button>
+                    <button type="button" class="filter-chip" id="logFilterSuccess" onclick="setLogFilter('success')">✅ Доставлено</button>
+                    <button type="button" class="filter-chip" id="logFilterError" onclick="setLogFilter('error')">⏭ Пропуски / Ошибки</button>
+                </div>
+
+                <div id="logsHistoryContainer" style="display:flex;flex-direction:column;gap:8px;max-height:460px;overflow-y:auto;"></div>
+            </div>
+        </section>
+
+        <!-- ==================== ВКЛАДКА 4: СТАТИСТИКА ==================== -->
+        <section id="tab-stats" class="tab-panel hidden">
+            <div class="grid-4">
+                <div class="card">
+                    <div style="font-size:11px;color:var(--muted);">Запусков</div>
+                    <div id="analyticsRunsCount" style="font-size:20px;font-weight:900;color:#fff;margin-top:4px;">0</div>
+                </div>
+                <div class="card">
+                    <div style="font-size:11px;color:var(--muted);">Отправлено</div>
+                    <div id="analyticsSentTotal" style="font-size:20px;font-weight:900;color:#f0abfc;margin-top:4px;">0</div>
+                </div>
+                <div class="card">
+                    <div style="font-size:11px;color:var(--muted);">Доставляемость</div>
+                    <div id="analyticsDeliveryRate" style="font-size:20px;font-weight:900;color:var(--success);margin-top:4px;">100%</div>
+                </div>
+                <div class="card">
+                    <div style="font-size:11px;color:var(--muted);">В чёрном списке</div>
+                    <div id="analyticsBlacklistCount" style="font-size:20px;font-weight:900;color:var(--warning);margin-top:4px;">0</div>
+                </div>
+            </div>
+
+            <!-- Сравнение A/B-теста -->
+            <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+                <div class="card-header" style="margin-bottom:0;">
+                    <div class="card-title">🧪 Сравнение A/B-теста постов</div>
+                    <span id="abLeaderBadge" class="status-pill on">Нет данных</span>
+                </div>
+                <div id="abComparisonBox" class="grid-2"></div>
+            </div>
+
+            <!-- Активность по нишам -->
+            <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+                <div class="card-header" style="margin-bottom:0;">
+                    <div class="card-title">📊 Активность по нишам</div>
+                    <span style="font-size:11px;color:var(--muted);">6 категорий</span>
+                </div>
+                <div id="nicheStatsBars" style="display:flex;flex-direction:column;gap:9px;"></div>
+            </div>
+
+            <!-- История запусков -->
+            <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+                <div class="card-header" style="margin-bottom:0;">
+                    <div class="card-title">🕒 История запусков рассылок</div>
+                    <button type="button" onclick="clearRunHistory()" style="background:none;border:none;color:var(--danger);font-size:12px;cursor:pointer;">Очистить</button>
+                </div>
+                <div id="runHistoryContainer" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== МОДАЛЬНЫЕ ОКНА ==================== -->
+
+    <!-- Модалка: HTML-ссылка -->
+    <div id="linkInsertModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div style="font-size:15px;font-weight:800;color:#fff;">🔗 Вставить HTML-ссылку</div>
+            <input type="text" id="linkAnchorInput" placeholder="Текст ссылки (например: Перейти в канал)">
+            <input type="url" id="linkHrefInput" placeholder="https://t.me/...">
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <button type="button" onclick="closeModal('linkInsertModal')" class="btn btn-dark">Отмена</button>
+                <button type="button" onclick="confirmLinkInsert()" class="btn btn-primary">Вставить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка: Сохранение шаблона -->
+    <div id="savePresetModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div style="font-size:15px;font-weight:800;color:#fff;">📋 Сохранить шаблон поста</div>
+            <input type="text" id="newPresetNameInput" placeholder="Название шаблона (например: Оффер №1)">
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <button type="button" onclick="closeModal('savePresetModal')" class="btn btn-dark">Отмена</button>
+                <button type="button" onclick="confirmSavePreset()" class="btn btn-primary">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка: Создание / Переименование папки -->
+    <div id="folderModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div id="folderModalTitle" style="font-size:15px;font-weight:800;color:#fff;">📁 Создать новую папку</div>
+            <div style="display:flex;gap:8px;">
+                <select id="folderEmojiSelect" style="width:74px;flex-shrink:0;">
+                    <option value="📁">📁</option>
+                    <option value="💎">💎</option>
+                    <option value="🔥">🔥</option>
+                    <option value="🚀">🚀</option>
+                    <option value="💼">💼</option>
+                    <option value="⭐">⭐</option>
+                    <option value="🎯">🎯</option>
+                    <option value="💜">💜</option>
+                </select>
+                <input type="text" id="folderNameInput" placeholder="Название папки (например: Мои VIP чаты)">
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#d8b4fe;cursor:pointer;" id="attachSelectedToFolderRow">
+                <input type="checkbox" id="attachSelectedToFolderCheck" checked>
+                <span>Сразу добавить в папку выбранные сейчас чаты</span>
+            </label>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <button type="button" onclick="closeModal('folderModal')" class="btn btn-dark">Отмена</button>
+                <button type="button" onclick="confirmFolderModal()" class="btn btn-primary">Сохранить папку</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка: Перенос чата в папку -->
+    <div id="moveChatFolderModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div style="font-size:15px;font-weight:800;color:#fff;">📂 Переместить чат в папку</div>
+            <div id="moveChatTargetLabel" style="font-size:12px;color:#d8b4fe;"></div>
+            <select id="moveChatFolderSelect"></select>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <button type="button" onclick="closeModal('moveChatFolderModal')" class="btn btn-dark">Отмена</button>
+                <button type="button" onclick="confirmMoveChatFolder()" class="btn btn-primary">Перенести</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка: Массовая вставка чатов списком -->
+    <div id="bulkAddModal" class="modal-backdrop hidden">
+        <div class="modal-card" style="max-width:450px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:15px;font-weight:800;color:#fff;">📋 Вставить чаты списком</span>
+                <button type="button" onclick="closeModal('bulkAddModal')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
+            </div>
+            <div style="font-size:12px;color:var(--muted);">Вставьте ссылки https://t.me/..., @username или ID (по одному на строку):</div>
+            <textarea id="bulkChatsTextarea" rows="5" placeholder="https://t.me/chat_one&#10;@chat_two&#10;-1001234567890" style="font-family:monospace;font-size:12px;"></textarea>
+            <select id="bulkFolderSelect"></select>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <button type="button" onclick="closeModal('bulkAddModal')" class="btn btn-dark">Отмена</button>
+                <button type="button" onclick="processBulkAdd()" class="btn btn-primary">Добавить в базу</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка: Бэкап JSON -->
+    <div id="backupModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:15px;font-weight:800;color:#fff;">💾 Резервная копия Kl1ni SPAM</span>
+                <button type="button" onclick="closeModal('backupModal')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;">✕</button>
+            </div>
+            <p style="font-size:12px;color:var(--muted);">Экспортируйте или восстановите все ваши папки, чаты, шаблоны, чёрный список и настройки одним файлом <code style="color:#f0abfc;">.json</code>.</p>
+            <div class="grid-2">
+                <button type="button" onclick="exportBackupJson()" class="btn btn-primary">⬇ Скачать .json</button>
+                <label class="btn btn-soft" style="cursor:pointer;">
+                    ⬆ Загрузить .json
+                    <input type="file" accept=".json,application/json" onchange="importBackupJson(event)" class="hidden">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== НИЖНЯЯ ЗАКРЕПЛЁННАЯ НАВИГАЦИЯ ==================== -->
+    <nav class="bottom-nav">
+        <div class="nav-grid">
+            <button type="button" class="nav-item active" id="nav-broadcast" onclick="switchTab('broadcast')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                <span>Рассылка</span>
+            </button>
+            <button type="button" class="nav-item" id="nav-chats" onclick="switchTab('chats')">
+                <span class="nav-badge" id="navChatBadge">0</span>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>База чатов</span>
+            </button>
+            <button type="button" class="nav-item" id="nav-logs" onclick="switchTab('logs')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Логи</span>
+            </button>
+            <button type="button" class="nav-item" id="nav-stats" onclick="switchTab('stats')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <span>Статистика</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // ==================== TELEGRAM WEBAPP SDK ИНТЕГРАЦИЯ ====================
+        const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+
+        function initTelegramMiniApp() {
+            if (!tg) return;
+            try {
+                tg.ready();
+                tg.expand();
+                if (typeof tg.setHeaderColor === 'function') tg.setHeaderColor('#090512');
+                if (typeof tg.setBackgroundColor === 'function') tg.setBackgroundColor('#090512');
+
+                const user = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : null;
+                if (user) {
+                    const displayName = user.username ? `@${user.username}` : (user.first_name || 'Telegram');
+                    const initial = (user.first_name || user.username || 'K').charAt(0).toUpperCase();
+                    document.getElementById('tgUserName').textContent = displayName;
+                    document.getElementById('tgUserAvatar').textContent = initial;
+                }
+            } catch (e) {}
+        }
+
+        function setClosingConfirmation(enabled) {
+            if (!tg) return;
+            try {
+                if (enabled && typeof tg.enableClosingConfirmation === 'function') {
+                    tg.enableClosingConfirmation();
+                } else if (!enabled && typeof tg.disableClosingConfirmation === 'function') {
+                    tg.disableClosingConfirmation();
+                }
+            } catch (e) {}
+        }
+
+        function triggerHaptic(type = 'light') {
+            if (!tg || !tg.HapticFeedback) return;
+            try {
+                if (['success', 'error', 'warning'].includes(type)) {
+                    tg.HapticFeedback.notificationOccurred(type);
+                } else {
+                    tg.HapticFeedback.impactOccurred(type);
+                }
+            } catch (e) {}
+        }
+
+        function openSmartUrl(url, e) {
+            if (e) e.stopPropagation();
+            if (!url || !/^https?:\/\//i.test(url)) return;
+            triggerHaptic('light');
+            if (tg) {
+                try {
+                    if (/^https?:\/\/(t\.me|telegram\.me)\//i.test(url) && typeof tg.openTelegramLink === 'function') {
+                        tg.openTelegramLink(url);
+                        return;
+                    }
+                    if (typeof tg.openLink === 'function') {
+                        tg.openLink(url);
+                        return;
+                    }
+                } catch (err) {}
+            }
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        function playCompletionChime() {
+            if (!state.soundEnabled) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                [523.25, 659.25, 783.99].forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.11);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime + idx * 0.11);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.11 + 0.34);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + idx * 0.11);
+                    osc.stop(ctx.currentTime + idx * 0.11 + 0.35);
+                });
+            } catch (e) {}
+        }
+
+        // ==================== БАЗОВЫЕ ДАННЫЕ ====================
+        const STORAGE_KEY = 'klini_spam_tma_v7';
+
+        const BANNER_STYLES = [
+            { id: 'violet_pink', label: 'Неон', grad: 'linear-gradient(135deg, #581c87, #7e22ce, #ec4899)', c1: '#581c87', c2: '#7e22ce', c3: '#ec4899' },
+            { id: 'deep_indigo', label: 'Индиго', grad: 'linear-gradient(135deg, #1e1b4b, #4338ca, #7c3aed)', c1: '#1e1b4b', c2: '#4338ca', c3: '#7c3aed' },
+            { id: 'cyber_grape', label: 'Кибер', grad: 'linear-gradient(135deg, #2e1065, #6d28d9, #c026d3)', c1: '#2e1065', c2: '#6d28d9', c3: '#c026d3' },
+            { id: 'midnight_plum', label: 'Ночь', grad: 'linear-gradient(135deg, #090512, #3b0764, #9333ea)', c1: '#090512', c2: '#3b0764', c3: '#9333ea' },
+            { id: 'royal_orchid', label: 'Орхидея', grad: 'linear-gradient(135deg, #4c1d95, #8b5cf6, #f43f5e)', c1: '#4c1d95', c2: '#8b5cf6', c3: '#f43f5e' },
+            { id: 'electric_iris', label: 'Ирис', grad: 'linear-gradient(135deg, #311042, #6b21a8, #3b82f6)', c1: '#311042', c2: '#6b21a8', c3: '#3b82f6' }
+        ];
+
+        const DEFAULT_PRESETS = [
+            {
+                id: 'pr_1',
+                name: '🚀 Анонс проекта / Telegram-бота',
+                text: '{greeting}, участники чата {chat_name}! 🚀\n\nЗапустили обновлённого <b>Telegram-бота</b> с удобным функционалом и бонусами для первых пользователей.\n\nПодробности и запуск по <a href="https://t.me/klini_spam_bot">прямой ссылке</a> или по кнопке ниже 👇',
+                bannerEnabled: true,
+                bannerSourceMode: 'gen',
+                bannerStyle: 'violet_pink',
+                bannerOverlay: 'НОВЫЙ ЗАПУСК • 2026',
+                buttonEnabled: true,
+                buttons: [{ emoji: '🚀', text: 'Открыть приложение', url: 'https://t.me/klini_spam_bot' }]
+            },
+            {
+                id: 'pr_2',
+                name: '💼 Поиск клиентов / Услуги',
+                text: '{greeting}, {chat_name}! 💼\n\nВозьму в работу <b>2 проекта</b> на разработку Telegram Mini Apps, дизайн или настройку трафика.\n\nПишите в личку, скину свежие кейсы и прайс!',
+                bannerEnabled: false,
+                bannerSourceMode: 'gen',
+                bannerStyle: 'deep_indigo',
+                bannerOverlay: 'КЕЙСЫ И УСЛУГИ',
+                buttonEnabled: true,
+                buttons: [{ emoji: '💬', text: 'Написать в ЛС', url: 'https://t.me/username' }]
+            },
+            {
+                id: 'pr_3',
+                name: '🔥 Набор в закрытое комьюнити',
+                text: '{greeting}, {chat_name}! 🔥\n\nОткрыли доступ в приватный канал со свежими связками, инструментами и разборами без воды.\n\nВход свободный по ссылке ниже 👇',
+                bannerEnabled: true,
+                bannerSourceMode: 'gen',
+                bannerStyle: 'cyber_grape',
+                bannerOverlay: 'ПРИВАТНЫЙ ДОСТУП',
+                buttonEnabled: true,
+                buttons: [
+                    { emoji: '🔥', text: 'Вступить в канал', url: 'https://t.me/example_channel' },
+                    { emoji: '📂', text: 'Забрать гайд', url: 'https://t.me/example_guide' }
+                ]
+            }
+        ];
+
+        const NICHES = ['Крипта', 'Игры', 'Трафик', 'Фриланс', 'Дизайн', 'Нейросети'];
+        const NICHE_SLUGS = {
+            'Крипта': 'crypto',
+            'Игры': 'games',
+            'Трафик': 'traffic',
+            'Фриланс': 'freelance',
+            'Дизайн': 'design',
+            'Нейросети': 'ai'
+        };
+
+        const PUBLIC_CHATS_CATALOG = [
+            // Крипта (6)
+            { id: 'cr_1', title: 'TON Ecosystem Chat RU', handle: '@ton_ecosystem_ru', url: 'https://t.me/ton_ecosystem_ru', niche: 'Крипта', folderId: 'fld_crypto', members: '34 200', desc: 'Обсуждение блокчейна TON, кошельков и Mini Apps.', selected: true },
+            { id: 'cr_2', title: 'DeFi & Web3 Инвесторы', handle: '@defi_investors_club', url: 'https://t.me/defi_investors_club', niche: 'Крипта', folderId: 'fld_crypto', members: '18 900', desc: 'Аналитика токенов, пулы ликвидности и ланчпады.', selected: true },
+            { id: 'cr_3', title: 'Крипто Трейдинг и Сигналы', handle: '@crypto_traders_cis', url: 'https://t.me/crypto_traders_cis', niche: 'Крипта', folderId: '', members: '42 150', desc: 'Спот, фьючерсы и разбор графиков BTC/ETH/TON.', selected: false },
+            { id: 'cr_4', title: 'Airdrops & RetroDrops Чат', handle: '@airdrop_hunters_ru', url: 'https://t.me/airdrop_hunters_ru', niche: 'Крипта', folderId: '', members: '29 400', desc: 'Актуальные тестнеты, тапалки и раздачи токенов.', selected: false },
+            { id: 'cr_5', title: 'P2P Арбитраж и Обмен', handle: '@p2p_crypto_exchange_ru', url: 'https://t.me/p2p_crypto_exchange_ru', niche: 'Крипта', folderId: '', members: '15 600', desc: 'Обмен крипты, обсуждение курсов и бирж.', selected: false },
+            { id: 'cr_6', title: 'NFT Коллекционеры TON', handle: '@ton_nft_bazaar', url: 'https://t.me/ton_nft_bazaar', niche: 'Крипта', folderId: '', members: '11 800', desc: 'Покупка, продажа и анонсы новых NFT-коллекций.', selected: false },
+            // Игры (6)
+            { id: 'gm_1', title: 'Notcoin & Tap Games Hub', handle: '@tap_games_cis', url: 'https://t.me/tap_games_cis', niche: 'Игры', folderId: 'fld_crypto', members: '51 800', desc: 'Комьюнити игроков в Telegram-кликеры и Web3-игры.', selected: true },
+            { id: 'gm_2', title: 'Геймдев и Unity / Unreal Чат', handle: '@gamedev_ru_chat', url: 'https://t.me/gamedev_ru_chat', niche: 'Игры', folderId: '', members: '14 300', desc: 'Разработка игр, поиск команды и тестировщиков.', selected: false },
+            { id: 'gm_3', title: 'CS2 & Dota 2 Поиск тимейтов', handle: '@cs2_dota2_party', url: 'https://t.me/cs2_dota2_party', niche: 'Игры', folderId: '', members: '38 700', desc: 'Поиск пати, турниры и игровые новости.', selected: false },
+            { id: 'gm_4', title: 'Мобильные игры iOS / Android', handle: '@mobile_gamers_hub', url: 'https://t.me/mobile_gamers_hub', niche: 'Игры', folderId: '', members: '21 100', desc: 'Обсуждение мобильных новинок, кланы и стримы.', selected: false },
+            { id: 'gm_5', title: 'GameFi & Play-to-Earn Чат', handle: '@gamefi_p2e_ru', url: 'https://t.me/gamefi_p2e_ru', niche: 'Игры', folderId: '', members: '16 500', desc: 'Игры с выводом токенов, гильдии и обзоры.', selected: false },
+            { id: 'gm_6', title: 'Инди-игры и Steam Сообщество', handle: '@indie_steam_chat', url: 'https://t.me/indie_steam_chat', niche: 'Игры', folderId: '', members: '9 850', desc: 'Релизы в Steam, промокоды и обсуждение инди-проектов.', selected: false },
+            // Трафик (6)
+            { id: 'tr_1', title: 'УБТ Трафик | TikTok & Reels', handle: '@ubt_traffic_pro', url: 'https://t.me/ubt_traffic_pro', niche: 'Трафик', folderId: 'fld_traffic', members: '23 450', desc: 'Условно-бесплатный трафик, связки и расходники.', selected: true },
+            { id: 'tr_2', title: 'Telegram Ads & Закупщики', handle: '@tg_ads_market', url: 'https://t.me/tg_ads_market', niche: 'Трафик', folderId: 'fld_traffic', members: '27 300', desc: 'Закуп рекламы в каналах, биржа постов и аналитика.', selected: true },
+            { id: 'tr_3', title: 'Арбитраж трафика CPA / Nutra', handle: '@cpa_arbitrage_chat', url: 'https://t.me/cpa_arbitrage_chat', niche: 'Трафик', folderId: '', members: '31 900', desc: 'Обсуждение партнёрок, трекеров и источников лидов.', selected: false },
+            { id: 'tr_4', title: 'SMM и Продвижение в Соцсетях', handle: '@smm_promo_ru', url: 'https://t.me/smm_promo_ru', niche: 'Трафик', folderId: '', members: '19 200', desc: 'Прогрев аккаунтов, контент-планы и рост охватов.', selected: false },
+            { id: 'tr_5', title: 'YouTube Shorts & Дзен Трафик', handle: '@shorts_traffic_hub', url: 'https://t.me/shorts_traffic_hub', niche: 'Трафик', folderId: '', members: '12 700', desc: 'Монетизация коротких видео и перелив аудитории в TG.', selected: false },
+            { id: 'tr_6', title: 'Яндекс Директ & Таргет ВК', handle: '@context_target_chat', url: 'https://t.me/context_target_chat', niche: 'Трафик', folderId: '', members: '17 400', desc: 'Настройка платного трафика, лидогенерация и кейсы.', selected: false },
+            // Фриланс (6)
+            { id: 'fr_1', title: 'Фриланс Биржа | Заказы IT', handle: '@freelance_orders_ru', url: 'https://t.me/freelance_orders_ru', niche: 'Фриланс', folderId: '', members: '46 200', desc: 'Ежедневные заказы на разработку, ботов и сайты.', selected: false },
+            { id: 'fr_2', title: 'Удалённая работа и Вакансии', handle: '@remote_jobs_cis', url: 'https://t.me/remote_jobs_cis', niche: 'Фриланс', folderId: '', members: '54 800', desc: 'Вакансии на удалёнку, подработка и проектные задачи.', selected: false },
+            { id: 'fr_3', title: 'Копирайтинг и Контент-менеджмент', handle: '@copywriters_chat_ru', url: 'https://t.me/copywriters_chat_ru', niche: 'Фриланс', folderId: '', members: '14 900', desc: 'Поиск авторов, редакторов и сценаристов для каналов.', selected: false },
+            { id: 'fr_4', title: 'Разработка Telegram-ботов', handle: '@tg_bots_freelance', url: 'https://t.me/tg_bots_freelance', niche: 'Фриланс', folderId: '', members: '18 300', desc: 'Заказы на Python/Node.js ботов и Telegram Mini Apps.', selected: false },
+            { id: 'fr_5', title: 'Ассистенты и Менеджеры проектов', handle: '@pm_assistants_hub', url: 'https://t.me/pm_assistants_hub', niche: 'Фриланс', folderId: '', members: '11 400', desc: 'Поиск бизнес-ассистентов, кураторов и проджектов.', selected: false },
+            { id: 'fr_6', title: 'Маркетологи и Продюсеры Онлайн', handle: '@producers_freelance', url: 'https://t.me/producers_freelance', niche: 'Фриланс', folderId: '', members: '16 100', desc: 'Запуски, воронки продаж и поиск подрядчиков.', selected: false },
+            // Дизайн (6)
+            { id: 'ds_1', title: 'Дизайн Биржа | UI/UX & Графика', handle: '@design_freelance_ru', url: 'https://t.me/design_freelance_ru', niche: 'Дизайн', folderId: '', members: '44 100', desc: 'Заказы на баннеры, логотипы, лендинги и оформление TG.', selected: false },
+            { id: 'ds_2', title: 'Figma & Веб-дизайн Комьюнити', handle: '@figma_designers_chat', url: 'https://t.me/figma_designers_chat', niche: 'Дизайн', folderId: '', members: '22 600', desc: 'Разбор макетов, плагины Figma и дизайн-системы.', selected: false },
+            { id: 'ds_3', title: 'Motion-дизайн и Видеомонтаж', handle: '@motion_video_ru', url: 'https://t.me/motion_video_ru', niche: 'Дизайн', folderId: '', members: '15 800', desc: 'Анимация креативов, Reels-монтаж и After Effects.', selected: false },
+            { id: 'ds_4', title: '3D Графика & Blender Чат', handle: '@blender_3d_cis', url: 'https://t.me/blender_3d_cis', niche: 'Дизайн', folderId: '', members: '13 200', desc: 'Моделирование, рендеры и 3D-иллюстрации для брендов.', selected: false },
+            { id: 'ds_5', title: 'Инфографика для Маркетплейсов', handle: '@wb_ozon_design_chat', url: 'https://t.me/wb_ozon_design_chat', niche: 'Дизайн', folderId: '', members: '28 900', desc: 'Карточки товаров для WB/Ozon и поиск дизайнеров.', selected: false },
+            { id: 'ds_6', title: 'Брендинг и Типографика', handle: '@branding_identity_ru', url: 'https://t.me/branding_identity_ru', niche: 'Дизайн', folderId: '', members: '10 500', desc: 'Айдентика, шрифты, упаковка продуктов и портфолио.', selected: false },
+            // Нейросети (6)
+            { id: 'ai_1', title: 'ChatGPT & Нейросети Чат RU', handle: '@chatgpt_ai_community', url: 'https://t.me/chatgpt_ai_community', niche: 'Нейросети', folderId: 'fld_traffic', members: '49 500', desc: 'Промпты, обзоры новых моделей и автоматизация задач.', selected: true },
+            { id: 'ai_2', title: 'Midjourney & AI Генерация Арта', handle: '@midjourney_art_ru', url: 'https://t.me/midjourney_art_ru', niche: 'Нейросети', folderId: '', members: '33 700', desc: 'Генерация изображений, баннеров и стилизация в AI.', selected: false },
+            { id: 'ai_3', title: 'AI Видео: Sora, Runway, Kling', handle: '@ai_video_creators', url: 'https://t.me/ai_video_creators', niche: 'Нейросети', folderId: '', members: '19 800', desc: 'Создание нейро-видео, аватаров и озвучки.', selected: false },
+            { id: 'ai_4', title: 'AI Разработка и LLM Агенты', handle: '@llm_developers_ru', url: 'https://t.me/llm_developers_ru', niche: 'Нейросети', folderId: '', members: '14 100', desc: 'API нейросетей, RAG, локальные модели и боты на ИИ.', selected: false },
+            { id: 'ai_5', title: 'Промпт-инжиниринг и AI Бизнес', handle: '@prompt_engineering_hub', url: 'https://t.me/prompt_engineering_hub', niche: 'Нейросети', folderId: '', members: '16 900', desc: 'Внедрение нейросетей в маркетинг, контент и продажи.', selected: false },
+            { id: 'ai_6', title: 'Нейросети для Дизайна и Креативов', handle: '@ai_design_tools', url: 'https://t.me/ai_design_tools', niche: 'Нейросети', folderId: '', members: '12 400', desc: 'Быстрая генерация обложек, превью и рекламных банеров.', selected: false }
+        ];
+
+        const MODERATION_TRIGGERS = [
+            { word: 'заработок', safe: 'дополнительный доход' },
+            { word: 'заработать', safe: 'получить результат' },
+            { word: 'халява', safe: 'бонус для своих' },
+            { word: 'халяву', safe: 'выгодные условия' },
+            { word: 'срочно', safe: 'актуально сегодня' },
+            { word: '100%', safe: 'проверенный' },
+            { word: 'казино', safe: 'игровая платформа' },
+            { word: 'кнопка бабло', safe: 'рабочий инструмент' },
+            { word: 'гарантия дохода', safe: 'прозрачные условия' },
+            { word: 'бесплатно', safe: 'без вложений' }
+        ];
+
+        // ==================== СОСТОЯНИЕ ПРИЛОЖЕНИЯ ====================
+        let state = {
+            soundEnabled: true,
+            presets: [...DEFAULT_PRESETS],
+            activePresetId: 'pr_1',
+
+            abTestEnabled: false,
+            activeAbVariant: 'A',
+            variants: {
+                A: {
+                    message: DEFAULT_PRESETS[0].text,
+                    bannerEnabled: true,
+                    bannerSourceMode: 'gen', // 'file' | 'url' | 'gen'
+                    bannerUploadedDataUrl: '',
+                    bannerUploadedName: '',
+                    bannerDirectUrl: '',
+                    bannerStyle: 'violet_pink',
+                    bannerOverlay: 'НОВЫЙ ЗАПУСК • 2026',
+                    buttonEnabled: true,
+                    buttonsLayout: 'col',
+                    buttons: [{ emoji: '🚀', text: 'Открыть приложение', url: 'https://t.me/klini_spam_bot' }]
+                },
+                B: {
+                    message: '{greeting}, {chat_name}! ⚡\n\nКоротко: запустили обновлённый <b>Telegram-сервис</b>, который экономит часы рутины каждый день.\n\nПопробуйте сами по ссылке ниже 👇',
+                    bannerEnabled: false,
+                    bannerSourceMode: 'gen',
+                    bannerUploadedDataUrl: '',
+                    bannerUploadedName: '',
+                    bannerDirectUrl: '',
+                    bannerStyle: 'cyber_grape',
+                    bannerOverlay: 'ТЕСТ ВАРИАНТА Б',
+                    buttonEnabled: true,
+                    buttonsLayout: 'col',
+                    buttons: [{ emoji: '⚡', text: 'Протестировать сервис', url: 'https://t.me/klini_spam_bot' }]
+                }
+            },
+
+            utmEnabled: false,
+            followUpEnabled: false,
+            followUpText: 'Если ссылка не открывается или есть вопросы — пишите в ЛС!',
+            followUpDelay: 15,
+
+            delayMin: 20,
+            delayMax: 45,
+            cooldownEnabled: true,
+            cooldownMinutes: 10,
+            cooldownEvery: 5,
+            scheduleMode: 'now',
+            skip24hEnabled: true,
+
+            folders: [
+                { id: 'fld_crypto', emoji: '💎', name: 'Крипта + Игры' },
+                { id: 'fld_traffic', emoji: '🔥', name: 'Трафик + Нейросети' }
+            ],
+            chats: [...PUBLIC_CHATS_CATALOG],
+            blacklist: [],
+            lastSentMap: {},
+            logs: [],
+            runHistory: [],
+            stats: { total: 0, success: 0, errors: 0 },
+            abStats: { A: { sent: 0 }, B: { sent: 0 } }
+        };
+
+        let currentChatFilter = 'all'; // 'all' | 'selected' | 'blacklist' | 'folder:ID' | 'niche:NAME'
+        let currentLogFilter = 'all';
+        let editingFolderId = null;
+        let movingChatId = null;
+        let isBroadcasting = false;
+        let isPaused = false;
+        let abortBroadcastFlag = false;
+        let previousMessageBeforeRewrite = null;
+
+        function getCurrentVariant() {
+            const key = state.abTestEnabled ? state.activeAbVariant : 'A';
+            if (!state.variants[key]) {
+                state.variants[key] = JSON.parse(JSON.stringify(state.variants.A));
+            }
+            return state.variants[key];
+        }
+
+        // ==================== LOCALSTORAGE ====================
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    state = {
+                        ...state,
+                        ...parsed,
+                        variants: {
+                            A: { ...state.variants.A, ...(parsed.variants && parsed.variants.A ? parsed.variants.A : {}) },
+                            B: { ...state.variants.B, ...(parsed.variants && parsed.variants.B ? parsed.variants.B : {}) }
+                        },
+                        abStats: {
+                            A: { sent: 0, ...(parsed.abStats && parsed.abStats.A ? parsed.abStats.A : {}) },
+                            B: { sent: 0, ...(parsed.abStats && parsed.abStats.B ? parsed.abStats.B : {}) }
+                        }
+                    };
+                }
+            } catch (e) {}
+            syncUIWithState();
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {}
+        }
+
+        function syncUIWithState() {
+            updateSoundBtnUI();
+
+            document.getElementById('abTestToggle').checked = state.abTestEnabled;
+            document.getElementById('abVariantTabs').classList.toggle('hidden', !state.abTestEnabled);
+            document.getElementById('abBadge').textContent = state.abTestEnabled ? 'Вкл' : 'Выкл';
+            document.getElementById('abBadge').className = state.abTestEnabled ? 'status-pill on' : 'status-pill';
+            updateAbTabsUI();
+
+            syncVariantFormUI();
+
+            document.getElementById('utmToggle').checked = state.utmEnabled;
+            document.getElementById('utmPreviewBox').classList.toggle('hidden', !state.utmEnabled);
+
+            document.getElementById('followUpToggle').checked = state.followUpEnabled;
+            document.getElementById('followUpTextInput').value = state.followUpText || '';
+            document.getElementById('followUpDelayInput').value = state.followUpDelay || 15;
+            toggleFollowUpSection(false);
+
+            document.getElementById('delayMinInput').value = state.delayMin;
+            document.getElementById('delayMaxInput').value = state.delayMax;
+            document.getElementById('cooldownToggle').checked = state.cooldownEnabled;
+            document.getElementById('cooldownMinutesInput').value = state.cooldownMinutes;
+            document.getElementById('cooldownEveryInput').value = state.cooldownEvery;
+            document.getElementById('scheduleModeSelect').value = state.scheduleMode;
+            document.getElementById('skip24hToggle').checked = state.skip24hEnabled;
+
+            renderPresetsDropdown();
+            renderBannerStylesGrid();
+            renderInlineButtonsEditor();
+            renderFoldersUI();
+            renderNicheFilterBar();
+            renderChats();
+            renderLogs();
+            renderAnalytics();
+            updateCounters();
+        }
+
+        function syncVariantFormUI() {
+            const v = getCurrentVariant();
+            document.getElementById('messageInput').value = v.message || '';
+
+            document.getElementById('enableBannerToggle').checked = !!v.bannerEnabled;
+            document.getElementById('bannerDirectUrlInput').value = v.bannerDirectUrl || '';
+            document.getElementById('bannerOverlayTextInput').value = v.bannerOverlay || '';
+            setBannerSourceMode(v.bannerSourceMode || 'file', false);
+            toggleBannerSection(false);
+
+            const fileInfoRow = document.getElementById('uploadedFileInfoRow');
+            if (v.bannerUploadedDataUrl) {
+                fileInfoRow.classList.remove('hidden');
+                document.getElementById('uploadedFileName').textContent = `✅ ${v.bannerUploadedName || 'Файл загружен'}`;
+            } else {
+                fileInfoRow.classList.add('hidden');
+            }
+
+            document.getElementById('enableButtonToggle').checked = !!v.buttonEnabled;
+            setButtonsLayout(v.buttonsLayout || 'col', false);
+            toggleButtonSection(false);
+
+            renderBannerStylesGrid();
+            renderInlineButtonsEditor();
+            updateCharCounter();
+            analyzeTextSafety();
+            updateUtmPreview();
+            updatePreview();
+        }
+
+        function saveSettings() {
+            state.delayMin = Math.max(3, parseInt(document.getElementById('delayMinInput').value, 10) || 20);
+            state.delayMax = Math.max(state.delayMin, parseInt(document.getElementById('delayMaxInput').value, 10) || 45);
+            state.cooldownEnabled = document.getElementById('cooldownToggle').checked;
+            state.cooldownMinutes = Math.max(1, parseInt(document.getElementById('cooldownMinutesInput').value, 10) || 10);
+            state.cooldownEvery = Math.max(2, parseInt(document.getElementById('cooldownEveryInput').value, 10) || 5);
+            state.scheduleMode = document.getElementById('scheduleModeSelect').value;
+            state.skip24hEnabled = document.getElementById('skip24hToggle').checked;
+            saveState();
+        }
+
+        function toggleSound() {
+            triggerHaptic('light');
+            state.soundEnabled = !state.soundEnabled;
+            updateSoundBtnUI();
+            saveState();
+            showToast(state.soundEnabled ? 'Звук уведомлений включен' : 'Звук уведомлений выключен');
+        }
+
+        function updateSoundBtnUI() {
+            document.getElementById('soundIcon').textContent = state.soundEnabled ? '🔔' : '🔕';
+        }
+
+        // ==================== УВЕДОМЛЕНИЯ И НАВИГАЦИЯ ====================
+        function showToast(msg, icon = '💜') {
+            const container = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = 'toast-msg';
+            el.innerHTML = `<span>${icon}</span><span style="flex:1;">${escapeHtml(msg)}</span>`;
+            container.appendChild(el);
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-6px)';
+                el.style.transition = '0.2s';
+                setTimeout(() => el.remove(), 220);
+            }, 2600);
+        }
+
+        function switchTab(tab) {
+            triggerHaptic('light');
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById(`nav-${tab}`).classList.add('active');
+
+            if (tab === 'stats') renderAnalytics();
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // ==================== A/B-ТЕСТ ПОСТОВ ====================
+        function toggleAbTest() {
+            triggerHaptic('light');
+            state.abTestEnabled = document.getElementById('abTestToggle').checked;
+            document.getElementById('abVariantTabs').classList.toggle('hidden', !state.abTestEnabled);
+            document.getElementById('abBadge').textContent = state.abTestEnabled ? 'Вкл' : 'Выкл';
+            document.getElementById('abBadge').className = state.abTestEnabled ? 'status-pill on' : 'status-pill';
+            if (!state.abTestEnabled) state.activeAbVariant = 'A';
+            updateAbTabsUI();
+            syncVariantFormUI();
+            saveState();
+            showToast(state.abTestEnabled ? 'A/B-тест включён: настройте Вариант А и Вариант Б' : 'A/B-тест выключен', '🧪');
+        }
+
+        function switchAbVariant(key) {
+            triggerHaptic('light');
+            state.activeAbVariant = key;
+            previousMessageBeforeRewrite = null;
+            document.getElementById('undoRewriteBtn').classList.add('hidden');
+            updateAbTabsUI();
+            syncVariantFormUI();
+            saveState();
+        }
+
+        function updateAbTabsUI() {
+            const btnA = document.getElementById('abTabBtnA');
+            const btnB = document.getElementById('abTabBtnB');
+            const tag = document.getElementById('previewVariantTag');
+            tag.classList.toggle('hidden', !state.abTestEnabled);
+            tag.textContent = `Вариант ${state.activeAbVariant}`;
+
+            btnA.className = state.activeAbVariant === 'A' ? 'btn btn-primary' : 'btn btn-dark';
+            btnB.className = state.activeAbVariant === 'B' ? 'btn btn-primary' : 'btn btn-dark';
+        }
+
+        // ==================== РЕРАЙТЕР И МОДЕРАЦИЯ ====================
+        function rewriteTextStyle(style) {
+            triggerHaptic('light');
+            const v = getCurrentVariant();
+            const current = (v.message || '').trim();
+            if (!current) {
+                showToast('Сначала введите текст для рерайта', '⚠️');
+                return;
+            }
+            if (!previousMessageBeforeRewrite) previousMessageBeforeRewrite = current;
+
+            const plain = current.replace(/<[^>]+>/g, '').trim();
+            const lines = plain.split('\n').map(l => l.trim()).filter(Boolean);
+            const core = lines.filter(l => !l.startsWith('{greeting}')).join(' ') || plain;
+
+            let result = current;
+            if (style === 'business') {
+                result = `{greeting}, уважаемые участники {chat_name}.\n\nПредставляем вашему вниманию актуальное предложение: <b>${escapeHtml(core)}</b>\n\nБудем рады сотрудничеству и обратной связи.`;
+            } else if (style === 'casual') {
+                result = `{greeting}, {chat_name}! 👋\n\nКороче, делюсь по-братски: ${escapeHtml(core)}\n\nКому актуально — залетайте, всё проверено на себе 🔥`;
+            } else if (style === 'short') {
+                const cut = core.length > 135 ? core.slice(0, 132).trim() + '...' : core;
+                result = `{greeting}, {chat_name}! ⚡ <b>${escapeHtml(cut)}</b> Подробности ниже 👇`;
+            }
+
+            v.message = result;
+            document.getElementById('messageInput').value = result;
+            document.getElementById('undoRewriteBtn').classList.remove('hidden');
+            handleMessageInput();
+            showToast('Стиль текста обновлён', '✨');
+        }
+
+        function undoRewrite() {
+            if (!previousMessageBeforeRewrite) return;
+            const v = getCurrentVariant();
+            v.message = previousMessageBeforeRewrite;
+            document.getElementById('messageInput').value = previousMessageBeforeRewrite;
+            previousMessageBeforeRewrite = null;
+            document.getElementById('undoRewriteBtn').classList.add('hidden');
+            handleMessageInput();
+        }
+
+        function analyzeTextSafety() {
+            const v = getCurrentVariant();
+            const plain = (v.message || '').replace(/<[^>]+>/g, '');
+            const card = document.getElementById('textSafetyCard');
+            const dot = document.getElementById('safetyStatusDot');
+            const label = document.getElementById('safetyStatusLabel');
+            const metrics = document.getElementById('safetyMetricsSummary');
+            const box = document.getElementById('safetySuggestionsBox');
+            const advice = document.getElementById('safetyAdviceText');
+            const chips = document.getElementById('safetyChipsContainer');
+
+            const letters = plain.replace(/[^a-zA-Zа-яА-ЯёЁ]/g, '');
+            const uppers = letters.replace(/[^A-ZА-ЯЁ]/g, '');
+            const capsPct = letters.length > 0 ? Math.round((uppers.length / letters.length) * 100) : 0;
+            const emojiMatches = plain.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu);
+            const emojiCount = emojiMatches ? emojiMatches.length : 0;
+
+            metrics.textContent = `Капс: ${capsPct}% • Эмодзи: ${emojiCount}`;
+
+            const lower = plain.toLowerCase();
+            const triggers = MODERATION_TRIGGERS.filter(t => lower.includes(t.word));
+            const highCaps = capsPct > 35 && letters.length > 12;
+            const highEmoji = emojiCount > 7;
+
+            if (triggers.length >= 2 || (triggers.length >= 1 && (highCaps || highEmoji))) {
+                card.style.borderColor = 'rgba(251, 113, 133, 0.5)';
+                dot.style.background = 'var(--danger)';
+                label.style.color = '#fda4af';
+                label.textContent = 'Высокий риск удаления модератором';
+            } else if (triggers.length === 1 || highCaps || highEmoji) {
+                card.style.borderColor = 'rgba(251, 191, 36, 0.5)';
+                dot.style.background = 'var(--warning)';
+                label.style.color = '#fde68a';
+                label.textContent = 'Есть риск удаления модератором';
+            } else {
+                card.style.borderColor = 'rgba(52, 211, 153, 0.38)';
+                dot.style.background = 'var(--success)';
+                label.style.color = '#6ee7b7';
+                label.textContent = 'Отлично проходит модерацию';
+            }
+
+            if (triggers.length > 0 || highCaps || highEmoji) {
+                box.classList.remove('hidden');
+                const notes = [];
+                if (highCaps) notes.push('слишком много ЗАГЛАВНЫХ букв');
+                if (highEmoji) notes.push('много эмодзи (>7)');
+                if (triggers.length > 0) notes.push('найдены стоп-слова (нажмите для мягкой замены)');
+                advice.textContent = 'Совет: ' + notes.join(', ') + '.';
+                chips.innerHTML = triggers.map(t =>
+                    `<button type="button" onclick="applySoftReplacement('${escapeHtml(t.word)}','${escapeHtml(t.safe)}')" class="btn btn-amber" style="padding:4px 8px;font-size:11px;">«${escapeHtml(t.word)}» → «${escapeHtml(t.safe)}»</button>`
+                ).join('');
+            } else {
+                box.classList.add('hidden');
+                chips.innerHTML = '';
+            }
+        }
+
+        function applySoftReplacement(badWord, safeWord) {
+            triggerHaptic('light');
+            const v = getCurrentVariant();
+            const regex = new RegExp(badWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            v.message = (v.message || '').replace(regex, safeWord);
+            document.getElementById('messageInput').value = v.message;
+            handleMessageInput();
+            showToast(`Заменено на «${safeWord}»`, '✅');
+        }
+
+        // ==================== ШАБЛОНЫ ====================
+        function renderPresetsDropdown() {
+            const select = document.getElementById('presetSelect');
+            select.innerHTML = state.presets.map(p =>
+                `<option value="${p.id}" ${p.id === state.activePresetId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`
+            ).join('');
+        }
+
+        function applySelectedPreset() {
+            const id = document.getElementById('presetSelect').value;
+            const p = state.presets.find(item => item.id === id);
+            if (!p) return;
+            state.activePresetId = id;
+            const v = getCurrentVariant();
+            v.message = p.text;
+            v.bannerEnabled = !!p.bannerEnabled;
+            v.bannerSourceMode = p.bannerSourceMode || 'gen';
+            v.bannerUploadedDataUrl = p.bannerUploadedDataUrl || '';
+            v.bannerUploadedName = p.bannerUploadedName || '';
+            v.bannerDirectUrl = p.bannerDirectUrl || '';
+            v.bannerStyle = p.bannerStyle || 'violet_pink';
+            v.bannerOverlay = p.bannerOverlay || 'НОВЫЙ ЗАПУСК';
+            v.buttonEnabled = !!p.buttonEnabled;
+            v.buttons = JSON.parse(JSON.stringify(p.buttons || [{ emoji: '🚀', text: 'Открыть', url: 'https://t.me/' }]));
+            syncVariantFormUI();
+            saveState();
+            showToast(`Загружен шаблон: ${p.name}`, '📋');
+        }
+
+        function openSavePresetModal() {
+            document.getElementById('newPresetNameInput').value = '';
+            openModal('savePresetModal');
+        }
+
+        function confirmSavePreset() {
+            const name = document.getElementById('newPresetNameInput').value.trim();
+            if (!name) return;
+            const v = getCurrentVariant();
+            const id = 'pr_' + Date.now();
+            state.presets.unshift({
+                id,
+                name,
+                text: v.message,
+                bannerEnabled: v.bannerEnabled,
+                bannerSourceMode: v.bannerSourceMode,
+                bannerUploadedDataUrl: v.bannerUploadedDataUrl,
+                bannerUploadedName: v.bannerUploadedName,
+                bannerDirectUrl: v.bannerDirectUrl,
+                bannerStyle: v.bannerStyle,
+                bannerOverlay: v.bannerOverlay,
+                buttonEnabled: v.buttonEnabled,
+                buttons: JSON.parse(JSON.stringify(v.buttons))
+            });
+            state.activePresetId = id;
+            renderPresetsDropdown();
+            saveState();
+            closeModal('savePresetModal');
+            triggerHaptic('success');
+            showToast('Шаблон сохранён', '✅');
+        }
+
+        function deleteCurrentPreset() {
+            if (state.presets.length <= 1) {
+                showToast('Должен остаться хотя бы один шаблон', '⚠️');
+                return;
+            }
+            const id = document.getElementById('presetSelect').value;
+            state.presets = state.presets.filter(p => p.id !== id);
+            state.activePresetId = state.presets[0].id;
+            renderPresetsDropdown();
+            applySelectedPreset();
+        }
+
+        // ==================== HTML-ФОРМАТИРОВАНИЕ И ПЕРЕМЕННЫЕ ====================
+        function handleMessageInput() {
+            const v = getCurrentVariant();
+            v.message = document.getElementById('messageInput').value;
+            updateCharCounter();
+            analyzeTextSafety();
+            updatePreview();
+            saveState();
+        }
+
+        function updateCharCounter() {
+            const v = getCurrentVariant();
+            document.getElementById('charCounter').textContent = `${(v.message || '').length} / 4096`;
+        }
+
+        function insertHtmlTag(tag) {
+            triggerHaptic('light');
+            const ta = document.getElementById('messageInput');
+            const start = ta.selectionStart;
+            const end = ta.selectionEnd;
+            const sel = ta.value.substring(start, end) || 'текст';
+            ta.setRangeText(`<${tag}>${sel}</${tag}>`, start, end, 'end');
+            ta.focus();
+            handleMessageInput();
+        }
+
+        function insertVariable(tag) {
+            triggerHaptic('light');
+            const ta = document.getElementById('messageInput');
+            ta.setRangeText(tag, ta.selectionStart, ta.selectionEnd, 'end');
+            ta.focus();
+            handleMessageInput();
+        }
+
+        function openLinkInsertModal() {
+            const ta = document.getElementById('messageInput');
+            const sel = ta.value.substring(ta.selectionStart, ta.selectionEnd);
+            document.getElementById('linkAnchorInput').value = sel || '';
+            document.getElementById('linkHrefInput').value = 'https://t.me/';
+            openModal('linkInsertModal');
+        }
+
+        function confirmLinkInsert() {
+            const anchor = document.getElementById('linkAnchorInput').value.trim() || 'Перейти по ссылке';
+            const href = document.getElementById('linkHrefInput').value.trim() || 'https://t.me/';
+            const ta = document.getElementById('messageInput');
+            ta.setRangeText(`<a href="${escapeHtml(href)}">${escapeHtml(anchor)}</a>`, ta.selectionStart, ta.selectionEnd, 'end');
+            closeModal('linkInsertModal');
+            ta.focus();
+            handleMessageInput();
+        }
+
+        // ==================== БАННЕР (СВОЙ ФАЙЛ / URL / ГЕНЕРАТОР) ====================
+        function toggleBannerSection(shouldSave = true) {
+            const v = getCurrentVariant();
+            v.bannerEnabled = document.getElementById('enableBannerToggle').checked;
+            document.getElementById('bannerControlsBox').classList.toggle('hidden', !v.bannerEnabled);
+            document.getElementById('bannerBadge').textContent = v.bannerEnabled ? 'Вкл' : 'Выкл';
+            document.getElementById('bannerBadge').className = v.bannerEnabled ? 'status-pill on' : 'status-pill';
+            updatePreview();
+            if (shouldSave) saveState();
+        }
+
+        function setBannerSourceMode(mode, shouldSave = true) {
+            const v = getCurrentVariant();
+            v.bannerSourceMode = mode;
+            document.getElementById('bannerSourceFileBtn').className = mode === 'file' ? 'btn btn-primary' : 'btn btn-dark';
+            document.getElementById('bannerSourceUrlBtn').className = mode === 'url' ? 'btn btn-primary' : 'btn btn-dark';
+            document.getElementById('bannerSourceGenBtn').className = mode === 'gen' ? 'btn btn-primary' : 'btn btn-dark';
+
+            document.getElementById('bannerFileBox').classList.toggle('hidden', mode !== 'file');
+            document.getElementById('bannerUrlBox').classList.toggle('hidden', mode !== 'url');
+            document.getElementById('bannerGenBox').classList.toggle('hidden', mode !== 'gen');
+
+            updatePreview();
+            if (shouldSave) saveState();
+        }
+
+        function processUploadedImageFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                showToast('Выберите файл изображения (JPG, PNG, GIF, WEBP)', '⚠️');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const v = getCurrentVariant();
+                v.bannerUploadedDataUrl = evt.target.result;
+                v.bannerUploadedName = file.name;
+                v.bannerSourceMode = 'file';
+                document.getElementById('uploadedFileInfoRow').classList.remove('hidden');
+                document.getElementById('uploadedFileName').textContent = `✅ ${file.name}`;
+                updatePreview();
+                saveState();
+                triggerHaptic('success');
+                showToast('Ваш баннер загружен в превью', '🖼️');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleBannerFileUpload(e) {
+            if (e.target.files && e.target.files[0]) {
+                processUploadedImageFile(e.target.files[0]);
+            }
+        }
+
+        function clearUploadedBanner() {
+            const v = getCurrentVariant();
+            v.bannerUploadedDataUrl = '';
+            v.bannerUploadedName = '';
+            document.getElementById('bannerFileInput').value = '';
+            document.getElementById('uploadedFileInfoRow').classList.add('hidden');
+            updatePreview();
+            saveState();
+        }
+
+        function handleBannerDirectUrlInput() {
+            const v = getCurrentVariant();
+            v.bannerDirectUrl = document.getElementById('bannerDirectUrlInput').value.trim();
+            updatePreview();
+            saveState();
+        }
+
+        function renderBannerStylesGrid() {
+            const v = getCurrentVariant();
+            const grid = document.getElementById('bannerStyleGrid');
+            grid.innerHTML = BANNER_STYLES.map(s => `
+                <button type="button" onclick="selectBannerStyle('${s.id}')" class="banner-swatch-btn ${v.bannerStyle === s.id ? 'active' : ''}">
+                    <span class="banner-swatch-color" style="background:${s.grad};"></span>
+                    <span>${s.label}</span>
+                </button>
+            `).join('');
+        }
+
+        function selectBannerStyle(id) {
+            triggerHaptic('light');
+            const v = getCurrentVariant();
+            v.bannerStyle = id;
+            renderBannerStylesGrid();
+            updatePreview();
+            saveState();
+        }
+
+        function handleBannerOverlayInput() {
+            const v = getCurrentVariant();
+            v.bannerOverlay = document.getElementById('bannerOverlayTextInput').value;
+            updatePreview();
+            saveState();
+        }
+
+        function downloadGeneratedBannerPng() {
+            const v = getCurrentVariant();
+            const styleObj = BANNER_STYLES.find(s => s.id === v.bannerStyle) || BANNER_STYLES[0];
+            const title = (v.bannerOverlay || 'НОВЫЙ ЗАПУСК').toUpperCase();
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 960;
+            canvas.height = 540;
+            const ctx = canvas.getContext('2d');
+
+            const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            grad.addColorStop(0, styleObj.c1);
+            grad.addColorStop(0.5, styleObj.c2);
+            grad.addColorStop(1, styleObj.c3);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+            ctx.beginPath();
+            ctx.roundRect(56, 48, 210, 44, 22);
+            ctx.fill();
+
+            ctx.fillStyle = '#f3e8ff';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillText('KL1NI SPAM', 84, 77);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 52px sans-serif';
+            ctx.fillText(title.slice(0, 26), 56, 455);
+
+            const link = document.createElement('a');
+            link.download = `klini_banner_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showToast('PNG-баннер скачан', '⬇');
+        }
+
+        // ==================== INLINE-КНОПКИ, UTM И ДОЖИМ ====================
+        function toggleButtonSection(shouldSave = true) {
+            const v = getCurrentVariant();
+            v.buttonEnabled = document.getElementById('enableButtonToggle').checked;
+            document.getElementById('buttonControlsBox').classList.toggle('hidden', !v.buttonEnabled);
+            document.getElementById('buttonBadge').textContent = v.buttonEnabled ? 'Вкл' : 'Выкл';
+            document.getElementById('buttonBadge').className = v.buttonEnabled ? 'status-pill on' : 'status-pill';
+            updatePreview();
+            if (shouldSave) saveState();
+        }
+
+        function setButtonsLayout(layout, shouldSave = true) {
+            const v = getCurrentVariant();
+            v.buttonsLayout = layout;
+            document.getElementById('layoutColBtn').className = layout === 'col' ? 'btn btn-primary' : 'btn btn-dark';
+            document.getElementById('layoutRowBtn').className = layout === 'row' ? 'btn btn-primary' : 'btn btn-dark';
+            updatePreview();
+            if (shouldSave) saveState();
+        }
+
+        function renderInlineButtonsEditor() {
+            const v = getCurrentVariant();
+            const list = document.getElementById('inlineButtonsEditorList');
+            const emojis = ['🚀', '🔥', '💎', '💬', '⚡', '🎁', '👉', '✅'];
+
+            list.innerHTML = v.buttons.map((btn, idx) => `
+                <div class="card" style="padding:9px;border-radius:12px;display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <select onchange="updateInlineBtnField(${idx}, 'emoji', this.value)" style="width:66px;flex-shrink:0;padding:7px;">
+                            ${emojis.map(em => `<option value="${em}" ${btn.emoji === em ? 'selected' : ''}>${em}</option>`).join('')}
+                        </select>
+                        <input type="text" value="${escapeHtml(btn.text)}" oninput="updateInlineBtnField(${idx}, 'text', this.value)" placeholder="Название кнопки">
+                        ${v.buttons.length > 1 ? `<button type="button" onclick="removeInlineButtonItem(${idx})" class="btn btn-danger" style="padding:7px 9px;">✕</button>` : ''}
+                    </div>
+                    <input type="url" value="${escapeHtml(btn.url)}" oninput="updateInlineBtnField(${idx}, 'url', this.value)" placeholder="https://t.me/...">
+                </div>
+            `).join('');
+
+            document.getElementById('addInlineBtnAction').classList.toggle('hidden', v.buttons.length >= 4);
+        }
+
+        function addInlineButtonItem() {
+            const v = getCurrentVariant();
+            if (v.buttons.length >= 4) return;
+            v.buttons.push({ emoji: '🔥', text: 'Подробнее', url: 'https://t.me/' });
+            renderInlineButtonsEditor();
+            updateUtmPreview();
+            updatePreview();
+            saveState();
+        }
+
+        function removeInlineButtonItem(idx) {
+            const v = getCurrentVariant();
+            v.buttons.splice(idx, 1);
+            renderInlineButtonsEditor();
+            updateUtmPreview();
+            updatePreview();
+            saveState();
+        }
+
+        function updateInlineBtnField(idx, field, val) {
+            const v = getCurrentVariant();
+            v.buttons[idx][field] = val;
+            updateUtmPreview();
+            updatePreview();
+            saveState();
+        }
+
+        function toggleUtmTags() {
+            state.utmEnabled = document.getElementById('utmToggle').checked;
+            document.getElementById('utmPreviewBox').classList.toggle('hidden', !state.utmEnabled);
+            updateUtmPreview();
+            updatePreview();
+            saveState();
+        }
+
+        function buildTaggedUrl(baseUrl, chatObj) {
+            const clean = (baseUrl || 'https://t.me/klini_spam_bot').trim();
+            if (!state.utmEnabled) return clean;
+            const nicheSlug = chatObj ? (NICHE_SLUGS[chatObj.niche] || 'custom') : 'crypto';
+            const chatSlug = chatObj ? chatObj.handle.replace(/^@/, '').toLowerCase() : 'ton_ecosystem_ru';
+            const sep = clean.includes('?') ? '&' : '?';
+            return `${clean}${sep}utm_source=telegram&utm_medium=klini_spam&utm_campaign=${nicheSlug}&utm_content=${chatSlug}`;
+        }
+
+        function updateUtmPreview() {
+            const v = getCurrentVariant();
+            const firstBtn = v.buttons && v.buttons[0] ? v.buttons[0] : { url: 'https://t.me/klini_spam_bot' };
+            const sample = state.chats.find(c => c.selected) || state.chats[0];
+            document.getElementById('utmLiveUrlPreview').textContent = buildTaggedUrl(firstBtn.url, sample);
+        }
+
+        function toggleFollowUpSection(shouldSave = true) {
+            state.followUpEnabled = document.getElementById('followUpToggle').checked;
+            document.getElementById('followUpControlsBox').classList.toggle('hidden', !state.followUpEnabled);
+            document.getElementById('followUpBadge').textContent = state.followUpEnabled ? 'Вкл' : 'Выкл';
+            document.getElementById('followUpBadge').className = state.followUpEnabled ? 'status-pill on' : 'status-pill';
+            updatePreview();
+            if (shouldSave) saveState();
+        }
+
+        function handleFollowUpInput() {
+            state.followUpText = document.getElementById('followUpTextInput').value;
+            state.followUpDelay = Math.max(3, parseInt(document.getElementById('followUpDelayInput').value, 10) || 15);
+            updatePreview();
+            saveState();
+        }
+
+        // ==================== РЕАЛЬНОЕ ЖИВОЕ ПРЕВЬЮ TELEGRAM ====================
+        function applySmartVariables(rawText, chatTitle = 'TON Ecosystem Chat RU') {
+            const greetings = ['Привет', 'Добрый день', 'Салют', 'Здарова'];
+            const rnd = greetings[Math.floor(Math.random() * greetings.length)];
+            return rawText
+                .replace(/\{chat_name\}/gi, chatTitle)
+                .replace(/\{greeting\}/gi, rnd);
+        }
+
+        function sanitizeTelegramHtml(raw) {
+            // Экранируем всё, затем восстанавливаем разрешённые теги Telegram (b, strong, i, em, u, s, del, code, pre, a)
+            let safe = escapeHtml(raw);
+            safe = safe.replace(/&lt;(b|strong|i|em|u|s|del|code|pre)&gt;([\s\S]*?)&lt;\/\1&gt;/gi, '<$1>$2</$1>');
+            safe = safe.replace(/&lt;a\s+href=(?:&quot;|&#039;)(https?:\/\/[^&"']+)(?:&quot;|&#039;)&gt;([\s\S]*?)&lt;\/a&gt;/gi,
+                '<a href="$1" onclick="openSmartUrl(\'$1\', event); return false;">$2</a>');
+            // Также поддержим Markdown-записи для удобства
+            safe = safe.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+            safe = safe.replace(/__(.+?)__/g, '<i>$1</i>');
+            safe = safe.replace(/~~(.+?)~~/g, '<s>$1</s>');
+            return safe;
+        }
+
+        function handlePreviewImgError() {
+            const img = document.getElementById('previewRealImage');
+            img.classList.add('hidden');
+            document.getElementById('previewGeneratedBanner').classList.remove('hidden');
+        }
+
+        function updatePreview() {
+            const v = getCurrentVariant();
+            const raw = v.message || '';
+            const previewEl = document.getElementById('previewText');
+            document.getElementById('previewTime').textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+            const sampleChat = state.chats.find(c => c.selected) || state.chats[0];
+            const sampleTitle = sampleChat ? sampleChat.title : 'TON Ecosystem Chat RU';
+
+            if (!raw.trim()) {
+                previewEl.innerHTML = '<span style="color:rgba(233,213,255,0.45);font-style:italic;">Введите текст поста, чтобы увидеть реальный вид...</span>';
+            } else {
+                previewEl.innerHTML = sanitizeTelegramHtml(applySmartVariables(raw, sampleTitle));
+            }
+
+            // Баннер в превью
+            const bannerWrap = document.getElementById('previewBannerWrapper');
+            const realImg = document.getElementById('previewRealImage');
+            const genBanner = document.getElementById('previewGeneratedBanner');
+            const overlayTitle = document.getElementById('previewBannerOverlayTitle');
+
+            if (v.bannerEnabled) {
+                bannerWrap.classList.remove('hidden');
+                if (v.bannerSourceMode === 'file' && v.bannerUploadedDataUrl) {
+                    realImg.src = v.bannerUploadedDataUrl;
+                    realImg.classList.remove('hidden');
+                    genBanner.classList.add('hidden');
+                } else if (v.bannerSourceMode === 'url' && /^https?:\/\//i.test(v.bannerDirectUrl || '')) {
+                    realImg.src = v.bannerDirectUrl;
+                    realImg.classList.remove('hidden');
+                    genBanner.classList.add('hidden');
+                } else {
+                    realImg.classList.add('hidden');
+                    genBanner.classList.remove('hidden');
+                    const styleObj = BANNER_STYLES.find(s => s.id === v.bannerStyle) || BANNER_STYLES[0];
+                    genBanner.style.background = styleObj.grad;
+                    overlayTitle.textContent = (v.bannerOverlay || '').trim() || 'НОВЫЙ ЗАПУСК';
+                }
+            } else {
+                bannerWrap.classList.add('hidden');
+            }
+
+            // Кликабельные кнопки в превью
+            const btnsGrid = document.getElementById('previewButtonsGrid');
+            if (v.buttonEnabled && v.buttons.length > 0) {
+                btnsGrid.classList.remove('hidden');
+                btnsGrid.className = `tg-inline-grid ${v.buttonsLayout === 'row' && v.buttons.length > 1 ? 'cols-2' : ''}`;
+                btnsGrid.innerHTML = v.buttons.map(b => {
+                    const finalHref = buildTaggedUrl(b.url, sampleChat);
+                    return `
+                        <a href="${escapeHtml(finalHref)}" onclick="openSmartUrl('${escapeHtml(finalHref)}', event); return false;" class="tg-inline-btn">
+                            <span>${escapeHtml(b.emoji || '🚀')}</span>
+                            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(b.text || 'Открыть ссылку')}</span>
+                        </a>
+                    `;
+                }).join('');
+            } else {
+                btnsGrid.classList.add('hidden');
+            }
+
+            // Второй пузырь: Быстрый дожим
+            const followUpWrap = document.getElementById('previewFollowUpWrapper');
+            if (state.followUpEnabled) {
+                followUpWrap.classList.remove('hidden');
+                document.getElementById('previewFollowUpDelayBadge').textContent = `⏱ Через ${state.followUpDelay} сек.`;
+                document.getElementById('previewFollowUpTimeTag').textContent = `+${state.followUpDelay}с`;
+                const fText = (state.followUpText || '').trim() || 'Если ссылка не открывается — пишите в ЛС!';
+                document.getElementById('previewFollowUpText').innerHTML = sanitizeTelegramHtml(applySmartVariables(fText, sampleTitle));
+            } else {
+                followUpWrap.classList.add('hidden');
+            }
+        }
+
+        function copyRenderedMessage() {
+            const v = getCurrentVariant();
+            const raw = (v.message || '').trim();
+            if (!raw) {
+                showToast('Текст пуст', '⚠️');
+                return;
+            }
+            const sampleChat = state.chats.find(c => c.selected) || state.chats[0];
+            const rendered = applySmartVariables(raw, sampleChat ? sampleChat.title : 'Telegram Чат');
+            const temp = document.createElement('textarea');
+            temp.value = rendered;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            temp.remove();
+            triggerHaptic('success');
+            showToast('Готовый текст поста скопирован', '📋');
+        }
+
+        // ==================== МОИ ПАПКИ И БАЗА ЧАТОВ ====================
+        function renderFoldersUI() {
+            const bar = document.getElementById('myFoldersBar');
+            const newChatSel = document.getElementById('newChatFolderSelect');
+            const bulkSel = document.getElementById('bulkFolderSelect');
+
+            const optionsHtml = `<option value="">Без папки (общий список)</option>` +
+                state.folders.map(f => `<option value="${f.id}">${escapeHtml(f.emoji)} ${escapeHtml(f.name)}</option>`).join('');
+            newChatSel.innerHTML = optionsHtml;
+            bulkSel.innerHTML = optionsHtml;
+
+            if (!state.folders.length) {
+                bar.innerHTML = `<span style="font-size:11px;color:var(--muted);">У вас пока нет своих папок. Нажмите «+ Создать папку», чтобы сгруппировать свои чаты.</span>`;
+                return;
+            }
+
+            bar.innerHTML = state.folders.map(f => {
+                const count = state.chats.filter(c => c.folderId === f.id && !state.blacklist.includes(c.handle)).length;
+                const isActive = currentChatFilter === `folder:${f.id}`;
+                return `
+                    <div class="folder-pill ${isActive ? 'active' : ''}">
+                        <button type="button" onclick="selectAndFilterFolder('${f.id}')" style="background:none;border:none;color:#f3e8ff;font-size:12px;font-weight:700;cursor:pointer;">
+                            ${escapeHtml(f.emoji)} ${escapeHtml(f.name)} (${count})
+                        </button>
+                        <button type="button" onclick="openRenameFolderModal('${f.id}')" title="Переименовать" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;">✏️</button>
+                        <button type="button" onclick="deleteFolder('${f.id}')" title="Удалить папку" style="background:none;border:none;color:#fda4af;font-size:11px;cursor:pointer;">✕</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectAndFilterFolder(folderId) {
+            triggerHaptic('light');
+            currentChatFilter = `folder:${folderId}`;
+            let selectedCount = 0;
+            state.chats.forEach(c => {
+                if (c.folderId === folderId && !state.blacklist.includes(c.handle)) {
+                    c.selected = true;
+                    selectedCount++;
+                } else {
+                    c.selected = false;
+                }
+            });
+            saveState();
+            renderFoldersUI();
+            renderNicheFilterBar();
+            renderChats();
+            const f = state.folders.find(item => item.id === folderId);
+            showToast(`Папка «${f ? f.name : ''}»: выбрано ${selectedCount} чатов`, '📁');
+        }
+
+        function openCreateFolderModal() {
+            editingFolderId = null;
+            document.getElementById('folderModalTitle').textContent = '📁 Создать новую папку';
+            document.getElementById('folderNameInput').value = '';
+            document.getElementById('folderEmojiSelect').value = '📁';
+            document.getElementById('attachSelectedToFolderRow').classList.remove('hidden');
+            openModal('folderModal');
+        }
+
+        function openRenameFolderModal(folderId) {
+            const folder = state.folders.find(f => f.id === folderId);
+            if (!folder) return;
+            editingFolderId = folderId;
+            document.getElementById('folderModalTitle').textContent = '✏️ Переименовать папку';
+            document.getElementById('folderNameInput').value = folder.name;
+            document.getElementById('folderEmojiSelect').value = folder.emoji || '📁';
+            document.getElementById('attachSelectedToFolderRow').classList.add('hidden');
+            openModal('folderModal');
+        }
+
+        function confirmFolderModal() {
+            const name = document.getElementById('folderNameInput').value.trim();
+            const emoji = document.getElementById('folderEmojiSelect').value;
+            if (!name) {
+                showToast('Введите название папки', '⚠️');
+                return;
+            }
+
+            if (editingFolderId) {
+                const folder = state.folders.find(f => f.id === editingFolderId);
+                if (folder) {
+                    folder.name = name;
+                    folder.emoji = emoji;
+                }
+                showToast('Папка переименована', '✅');
+            } else {
+                const newId = 'fld_' + Date.now();
+                state.folders.unshift({ id: newId, emoji, name });
+                if (document.getElementById('attachSelectedToFolderCheck').checked) {
+                    state.chats.forEach(c => {
+                        if (c.selected && !state.blacklist.includes(c.handle)) {
+                            c.folderId = newId;
+                        }
+                    });
+                }
+                currentChatFilter = `folder:${newId}`;
+                showToast(`Создана папка «${name}»`, '📁');
+            }
+
+            closeModal('folderModal');
+            saveState();
+            renderFoldersUI();
+            renderNicheFilterBar();
+            renderChats();
+            triggerHaptic('success');
+        }
+
+        function deleteFolder(folderId) {
+            state.folders = state.folders.filter(f => f.id !== folderId);
+            state.chats.forEach(c => {
+                if (c.folderId === folderId) c.folderId = '';
+            });
+            if (currentChatFilter === `folder:${folderId}`) currentChatFilter = 'all';
+            saveState();
+            renderFoldersUI();
+            renderNicheFilterBar();
+            renderChats();
+            showToast('Папка удалена (чаты остались в общем списке)', '🗑️');
+        }
+
+        function openMoveChatFolderModal(chatId, e) {
+            if (e) e.stopPropagation();
+            const chat = state.chats.find(c => c.id === chatId);
+            if (!chat) return;
+            movingChatId = chatId;
+            document.getElementById('moveChatTargetLabel').textContent = `Чат: ${chat.title} (${chat.handle})`;
+            const sel = document.getElementById('moveChatFolderSelect');
+            sel.innerHTML = `<option value="">Без папки (общий список)</option>` +
+                state.folders.map(f => `<option value="${f.id}" ${chat.folderId === f.id ? 'selected' : ''}>${escapeHtml(f.emoji)} ${escapeHtml(f.name)}</option>`).join('');
+            openModal('moveChatFolderModal');
+        }
+
+        function confirmMoveChatFolder() {
+            const chat = state.chats.find(c => c.id === movingChatId);
+            if (chat) {
+                chat.folderId = document.getElementById('moveChatFolderSelect').value;
+                saveState();
+                renderFoldersUI();
+                renderChats();
+                showToast('Чат перемещён в папку', '📂');
+            }
+            closeModal('moveChatFolderModal');
+        }
+
+        function renderNicheFilterBar() {
+            const bar = document.getElementById('nicheFilterBar');
+            const items = [
+                { id: 'all', label: `Все (${state.chats.length})` },
+                { id: 'selected', label: 'Выбранные' },
+                ...state.folders.map(f => ({ id: `folder:${f.id}`, label: `${f.emoji} ${f.name}` })),
+                ...NICHES.map(n => ({ id: `niche:${n}`, label: n })),
+                { id: 'blacklist', label: `🚫 ЧС (${state.blacklist.length})` }
+            ];
+            bar.innerHTML = items.map(it =>
+                `<button type="button" onclick="setChatFilter('${it.id}')" class="filter-chip ${currentChatFilter === it.id ? 'active' : ''}">${escapeHtml(it.label)}</button>`
+            ).join('');
+        }
+
+        function setChatFilter(filterId) {
+            currentChatFilter = filterId;
+            renderFoldersUI();
+            renderNicheFilterBar();
+            renderChats();
+        }
+
+        function getFilteredChats() {
+            const q = document.getElementById('chatSearchInput').value.toLowerCase().trim();
+            return state.chats.filter(c => {
+                const isBl = state.blacklist.includes(c.handle);
+                if (currentChatFilter === 'blacklist') {
+                    if (!isBl) return false;
+                } else {
+                    if (isBl) return false;
+                    if (currentChatFilter === 'selected' && !c.selected) return false;
+                    if (currentChatFilter.startsWith('folder:')) {
+                        const fid = currentChatFilter.replace('folder:', '');
+                        if (c.folderId !== fid) return false;
+                    }
+                    if (currentChatFilter.startsWith('niche:')) {
+                        const n = currentChatFilter.replace('niche:', '');
+                        if (c.niche !== n) return false;
+                    }
+                }
+                if (!q) return true;
+                const folderObj = state.folders.find(f => f.id === c.folderId);
+                const folderName = folderObj ? folderObj.name.toLowerCase() : '';
+                return c.title.toLowerCase().includes(q) ||
+                       c.handle.toLowerCase().includes(q) ||
+                       folderName.includes(q) ||
+                       (c.desc && c.desc.toLowerCase().includes(q));
+            });
+        }
+
+        function renderChats() {
+            const container = document.getElementById('chatsListContainer');
+            const filtered = getFilteredChats();
+            document.getElementById('catalogTotalCount').textContent = `${state.chats.length} чатов`;
+
+            const selectedTotal = state.chats.filter(c => c.selected && !state.blacklist.includes(c.handle)).length;
+            document.getElementById('filteredSelectedInfo').textContent = `Выбрано для рассылки: ${selectedTotal}`;
+
+            if (!filtered.length) {
+                container.innerHTML = `<div class="sub-box" style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">В этой папке или фильтре пока нет чатов. Добавьте свой чат выше!</div>`;
+                updateCounters();
+                return;
+            }
+
+            container.innerHTML = filtered.map(chat => {
+                const isBl = state.blacklist.includes(chat.handle);
+                const sentRecently = isSentWithin24h(chat.handle);
+                const folderObj = state.folders.find(f => f.id === chat.folderId);
+                const openUrl = chat.url || (chat.handle.startsWith('@') ? `https://t.me/${chat.handle.slice(1)}` : '');
+
+                return `
+                    <div onclick="${isBl ? '' : `toggleChatSelect('${chat.id}')`}" class="chat-item ${chat.selected && !isBl ? 'selected' : ''}">
+                        <div style="display:flex;align-items:flex-start;gap:10px;min-width:0;flex:1;">
+                            ${!isBl
+                                ? `<input type="checkbox" ${chat.selected ? 'checked' : ''} onclick="event.stopPropagation(); toggleChatSelect('${chat.id}')" style="margin-top:2px;">`
+                                : `<span style="font-size:14px;">🚫</span>`}
+                            <div style="min-width:0;flex:1;">
+                                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+                                    <span style="font-weight:700;font-size:13px;color:#fff;">${escapeHtml(chat.title)}</span>
+                                    ${folderObj ? `<span class="tag-badge folder">${escapeHtml(folderObj.emoji)} ${escapeHtml(folderObj.name)}</span>` : ''}
+                                    <span class="tag-badge">${escapeHtml(chat.niche)}</span>
+                                    ${sentRecently ? `<span class="tag-badge" style="color:#fde68a;border-color:rgba(251,191,36,0.35);">Был пост &lt;24ч</span>` : ''}
+                                </div>
+                                <div style="font-size:11px;color:var(--muted);margin-bottom:3px;">${escapeHtml(chat.desc || 'Добавленный чат Telegram')}</div>
+                                <div style="font-size:11px;color:#f0abfc;font-weight:600;">
+                                    ${escapeHtml(chat.handle)} <span style="color:var(--muted);font-weight:400;">• ${escapeHtml(chat.members)} уч.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+                            ${openUrl ? `<button type="button" onclick="openSmartUrl('${escapeHtml(openUrl)}', event)" class="btn btn-dark" style="padding:6px 9px;font-size:11px;">Открыть ↗</button>` : ''}
+                            <button type="button" onclick="openMoveChatFolderModal('${chat.id}', event)" title="Перенести в папку" class="btn btn-dark" style="padding:6px 8px;font-size:11px;">📂</button>
+                            <button type="button" onclick="event.stopPropagation(); toggleBlacklistChat('${chat.handle}')" title="${isBl ? 'Вернуть из ЧС' : 'В чёрный список'}" class="btn btn-dark" style="padding:6px 8px;font-size:11px;">${isBl ? '♻️' : '🚫'}</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            updateCounters();
+        }
+
+        function parseChatInput(raw) {
+            const s = raw.trim();
+            if (!s) return null;
+            if (/^https?:\/\/(t\.me|telegram\.me)\//i.test(s)) {
+                const cleanUrl = s.split('?')[0].replace(/\/+$/, '');
+                const slug = cleanUrl.replace(/^https?:\/\/(t\.me|telegram\.me)\//i, '').split('/')[0];
+                const handle = slug.startsWith('+') ? slug : `@${slug}`;
+                return { handle, url: cleanUrl, titleHint: slug.replace(/^\+/, 'Приватный чат ') };
+            }
+            if (/^(t\.me|telegram\.me)\//i.test(s)) {
+                const cleanUrl = 'https://' + s.split('?')[0].replace(/\/+$/, '');
+                const slug = s.replace(/^(t\.me|telegram\.me)\//i, '').split('/')[0];
+                const handle = slug.startsWith('+') ? slug : `@${slug}`;
+                return { handle, url: cleanUrl, titleHint: slug };
+            }
+            if (/^-?\d+$/.test(s)) {
+                return { handle: s, url: '', titleHint: `Чат ${s}` };
+            }
+            const handle = s.startsWith('@') ? s : `@${s}`;
+            return { handle, url: `https://t.me/${handle.slice(1)}`, titleHint: handle.slice(1).replace(/_/g, ' ') };
+        }
+
+        function addCustomChat(e) {
+            e.preventDefault();
+            const parsed = parseChatInput(document.getElementById('newChatHandleInput').value);
+            if (!parsed) return;
+            const customTitle = document.getElementById('newChatTitleInput').value.trim();
+            const folderId = document.getElementById('newChatFolderSelect').value;
+
+            if (state.chats.some(c => c.handle.toLowerCase() === parsed.handle.toLowerCase())) {
+                showToast('Этот чат уже есть в вашей базе', '⚠️');
+                return;
+            }
+
+            const title = customTitle || (parsed.titleHint.charAt(0).toUpperCase() + parsed.titleHint.slice(1));
+            state.chats.unshift({
+                id: 'usr_' + Date.now(),
+                title,
+                handle: parsed.handle,
+                url: parsed.url,
+                niche: 'Свой чат',
+                folderId,
+                members: '—',
+                desc: 'Добавлено вами вручную.',
+                selected: true
+            });
+
+            document.getElementById('newChatHandleInput').value = '';
+            document.getElementById('newChatTitleInput').value = '';
+            saveState();
+            renderFoldersUI();
+            renderNicheFilterBar();
+            renderChats();
+            triggerHaptic('success');
+            showToast(`Чат «${title}» сохранён в базу`, '✅');
+        }
+
+        function openBulkAddModal() {
+            document.getElementById('bulkChatsTextarea').value = '';
+            openModal('bulkAddModal');
+        }
+
+        function processBulkAdd() {
+            const lines = document.getElementById('bulkChatsTextarea').value.split('\n').map(l => l.trim()).filter(Boolean);
+            const folderId = document.getElementById('bulkFolderSelect').value;
+            if (!lines.length) return;
+
+            let added = 0;
+            lines.forEach((line, idx) => {
+                const parsed = parseChatInput(line);
+                if (parsed && !state.chats.some(c => c.handle.toLowerCase() === parsed.handle.toLowerCase())) {
+                    state.chats.unshift({
+                        id: `bulk_${Date.now()}_${idx}`,
+                        title: parsed.titleHint.charAt(0).toUpperCase() + parsed.titleHint.slice(1),
+                        handle: parsed.handle,
+                        url: parsed.url,
+                        niche: 'Свой чат',
+                        folderId,
+                        members: '—',
+                        desc: 'Добавлено списком.',
+                        selected: true
+                    });
+                    added++;
+                }
+            });
+
+            closeModal('bulkAddModal');
+            saveState();
+            renderFoldersUI();
+            renderNicheFilterBar();
+            renderChats();
+            triggerHaptic('success');
+            showToast(`Добавлено чатов: ${added}`, '✅');
+        }
+
+        function toggleBlacklistChat(handle) {
+            triggerHaptic('light');
+            const idx = state.blacklist.indexOf(handle);
+            if (idx >= 0) {
+                state.blacklist.splice(idx, 1);
+                showToast(`Чат ${handle} возвращён из ЧС`, '♻️');
+            } else {
+                state.blacklist.push(handle);
+                const chat = state.chats.find(c => c.handle === handle);
+                if (chat) chat.selected = false;
+                showToast(`Чат ${handle} отправлен в ЧС`, '🚫');
+            }
+            saveState();
+            renderFoldersUI();
+            renderNicheFilterBar();
+            renderChats();
+        }
+
+        function isSentWithin24h(handle) {
+            const ts = state.lastSentMap[handle];
+            return ts ? (Date.now() - ts) < 86400000 : false;
+        }
+
+        function toggleChatSelect(id) {
+            triggerHaptic('light');
+            const chat = state.chats.find(c => c.id === id);
+            if (chat) {
+                chat.selected = !chat.selected;
+                saveState();
+                renderChats();
+            }
+        }
+
+        function selectFilteredChats(val) {
+            triggerHaptic('light');
+            const ids = new Set(getFilteredChats().map(c => c.id));
+            state.chats.forEach(c => {
+                if (ids.has(c.id) && !state.blacklist.includes(c.handle)) {
+                    c.selected = val;
+                }
+            });
+            saveState();
+            renderChats();
+            showToast(val ? `Выделено чатов: ${ids.size}` : 'Выделение снято');
+        }
+
+        function exportChatsTxt(mode) {
+            let list = [];
+            if (mode === 'selected') {
+                list = state.chats.filter(c => c.selected && !state.blacklist.includes(c.handle)).map(c => c.url || c.handle);
+            } else {
+                list = [...new Set(state.logs.filter(l => l.type === 'success').map(l => l.handle))];
+            }
+            if (!list.length) {
+                showToast('Список для выгрузки пуст', '⚠️');
+                return;
+            }
+            const blob = new Blob([list.join('\n')], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `klini_chats_${new Date().toISOString().slice(0, 10)}.txt`;
+            a.click();
+            showToast(`Выгружено строк: ${list.length}`, '⬇');
+        }
+
+        function updateCounters() {
+            const selectedCount = state.chats.filter(c => c.selected && !state.blacklist.includes(c.handle)).length;
+            document.getElementById('headerSelectedCount').textContent = selectedCount;
+            document.getElementById('navChatBadge').textContent = selectedCount;
+            document.getElementById('startBtnText').textContent = `Начать рассылку (${selectedCount} чатов)`;
+        }
+
+        // ==================== БЭКАП JSON ====================
+        function exportBackupJson() {
+            const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `klini_spam_backup_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            showToast('Резервная копия скачана', '💾');
+        }
+
+        function importBackupJson(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const imported = JSON.parse(evt.target.result);
+                    if (!imported || !Array.isArray(imported.chats)) throw new Error('Неверный формат');
+                    state = { ...state, ...imported };
+                    saveState();
+                    syncUIWithState();
+                    closeModal('backupModal');
+                    triggerHaptic('success');
+                    showToast('Данные восстановлены из бэкапа', '✅');
+                } catch (err) {
+                    showToast('Ошибка чтения файла бэкапа', '⛔');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ==================== ЗАПУСК РАССЫЛКИ ====================
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        async function waitWhilePaused() {
+            while (isPaused && !abortBroadcastFlag) {
+                await sleep(250);
+            }
+        }
+
+        async function startBroadcast() {
+            if (isBroadcasting) return;
+
+            const activeChats = state.chats.filter(c => c.selected && !state.blacklist.includes(c.handle));
+            const rawMsgA = (state.variants.A.message || '').trim();
+            const rawMsgB = (state.variants.B.message || '').trim();
+
+            if (!rawMsgA) {
+                showToast('Введите текст рассылки перед запуском', '⛔');
+                return;
+            }
+            if (state.abTestEnabled && !rawMsgB) {
+                showToast('Заполните также текст Варианта Б', '⚠️');
+                return;
+            }
+            if (!activeChats.length) {
+                showToast('Выберите хотя бы 1 чат во вкладке «База чатов»', '⚠️');
+                switchTab('chats');
+                return;
+            }
+
+            isBroadcasting = true;
+            isPaused = false;
+            abortBroadcastFlag = false;
+            setClosingConfirmation(true);
+            triggerHaptic('medium');
+
+            const card = document.getElementById('activeBroadcastCard');
+            const startBtn = document.getElementById('startBroadcastBtn');
+            const bar = document.getElementById('broadcastProgressBar');
+            const countEl = document.getElementById('broadcastProgressCount');
+            const actionEl = document.getElementById('broadcastCurrentAction');
+            const timerEl = document.getElementById('broadcastCountdown');
+            const liveLog = document.getElementById('liveStreamLog');
+            const titleEl = document.getElementById('broadcastStatusTitle');
+
+            card.classList.remove('hidden');
+            startBtn.style.opacity = '0.5';
+            startBtn.style.pointerEvents = 'none';
+            liveLog.innerHTML = '';
+            bar.style.width = '0%';
+            titleEl.textContent = state.abTestEnabled ? 'Рассылка (A/B-тест) запущена...' : 'Рассылка запущена...';
+            document.getElementById('pauseResumeBtn').textContent = '⏸ Пауза';
+
+            const total = activeChats.length;
+            let sentBatch = 0;
+            let runDelivered = 0;
+
+            showToast(`Запуск по ${total} чатам`, '🚀');
+
+            for (let i = 0; i < total; i++) {
+                await waitWhilePaused();
+                if (abortBroadcastFlag) {
+                    appendLiveConsole('⏹ Рассылка остановлена пользователем', '#fcd34d');
+                    break;
+                }
+
+                const chat = activeChats[i];
+                const variantKey = state.abTestEnabled ? (i % 2 === 0 ? 'A' : 'B') : 'A';
+                const variantObj = state.variants[variantKey];
+                const vTag = state.abTestEnabled ? `[${variantKey}] ` : '';
+
+                countEl.textContent = `${i + 1} / ${total}`;
+
+                if (state.skip24hEnabled && isSentWithin24h(chat.handle)) {
+                    state.stats.total++;
+                    state.stats.errors++;
+                    appendLiveConsole(`⏭ ${vTag}Пропуск ${chat.handle} — уже отправляли за 24ч`, '#fcd34d');
+                    addLog(chat.title, chat.handle, 'error', `${vTag}Пропущено (защита от повторной отправки за 24ч)`, chat.niche);
+                    bar.style.width = `${Math.round(((i + 1) / total) * 100)}%`;
+                    renderLogs();
+                    saveState();
+                    continue;
+                }
+
+                const finalMessage = applySmartVariables(variantObj.message, chat.title).replace(/<[^>]+>/g, '');
+                actionEl.textContent = `${vTag}Отправка в ${chat.title} (${chat.handle})...`;
+                timerEl.textContent = '';
+
+                await sleep(550);
+                await waitWhilePaused();
+                if (abortBroadcastFlag) break;
+
+                state.stats.total++;
+                state.stats.success++;
+                if (state.abTestEnabled) state.abStats[variantKey].sent++;
+                sentBatch++;
+                runDelivered++;
+                state.lastSentMap[chat.handle] = Date.now();
+
+                const utmInfo = (state.utmEnabled && variantObj.buttonEnabled) ? ` [UTM]` : '';
+                appendLiveConsole(`✅ ${vTag}Доставлено в ${chat.handle}${utmInfo}`, '#6ee7b7');
+                addLog(chat.title, chat.handle, 'success', `${vTag}Отправлено: «${finalMessage.slice(0, 44)}...»${utmInfo}`, chat.niche);
+
+                if (state.followUpEnabled && !abortBroadcastFlag) {
+                    const demoFollowSec = Math.min(3, Math.max(1, Math.round(state.followUpDelay / 10)));
+                    actionEl.textContent = `💬 Дожим для ${chat.handle} (${state.followUpDelay}с)...`;
+                    for (let fs = demoFollowSec; fs > 0; fs--) {
+                        await waitWhilePaused();
+                        if (abortBroadcastFlag) break;
+                        timerEl.textContent = `💬 00:0${fs}`;
+                        await sleep(1000);
+                    }
+                    timerEl.textContent = '';
+                    if (!abortBroadcastFlag) {
+                        const fMsg = applySmartVariables(state.followUpText || 'Если ссылка не открывается — пишите в ЛС!', chat.title);
+                        appendLiveConsole(`💬 Дожим отправлен в ${chat.handle}`, '#f0abfc');
+                        addLog(chat.title, chat.handle, 'success', `Дожим (+${state.followUpDelay}с): «${fMsg.slice(0, 44)}...»`, chat.niche);
+                    }
+                }
+
+                bar.style.width = `${Math.round(((i + 1) / total) * 100)}%`;
+                renderLogs();
+                renderChats();
+                saveState();
+
+                if (i < total - 1 && !abortBroadcastFlag) {
+                    if (state.cooldownEnabled && sentBatch % state.cooldownEvery === 0) {
+                        actionEl.textContent = `Авто-отдых (${state.cooldownMinutes} мин., демо 3с)...`;
+                        appendLiveConsole(`💜 Серия завершена — пауза ${state.cooldownMinutes} мин.`, '#f0abfc');
+                        for (let c = 3; c > 0; c--) {
+                            await waitWhilePaused();
+                            if (abortBroadcastFlag) break;
+                            timerEl.textContent = `00:0${c}`;
+                            await sleep(1000);
+                        }
+                    } else {
+                        const realSec = Math.floor(Math.random() * (state.delayMax - state.delayMin + 1)) + state.delayMin;
+                        const demoSec = Math.max(2, Math.min(4, Math.round(realSec / 12)));
+                        actionEl.textContent = `Пауза ${realSec} сек. перед следующим чатом...`;
+                        for (let s = demoSec; s > 0; s--) {
+                            await waitWhilePaused();
+                            if (abortBroadcastFlag) break;
+                            timerEl.textContent = `00:0${s}`;
+                            await sleep(1000);
+                        }
+                    }
+                    timerEl.textContent = '';
+                }
+            }
+
+            if (runDelivered > 0) {
+                state.runHistory.unshift({
+                    id: 'run_' + Date.now(),
+                    date: new Date().toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
+                    preview: applySmartVariables(rawMsgA, 'Чат').replace(/<[^>]+>/g, '').slice(0, 56),
+                    chatsCount: runDelivered,
+                    abMode: state.abTestEnabled,
+                    handles: activeChats.map(c => c.handle)
+                });
+                if (state.runHistory.length > 25) state.runHistory.pop();
+            }
+
+            isBroadcasting = false;
+            isPaused = false;
+            setClosingConfirmation(false);
+            startBtn.style.opacity = '1';
+            startBtn.style.pointerEvents = 'auto';
+            timerEl.textContent = '';
+            titleEl.textContent = abortBroadcastFlag ? 'Рассылка остановлена' : 'Рассылка завершена';
+            actionEl.textContent = abortBroadcastFlag ? 'Остановлено пользователем' : 'Все выбранные чаты обработаны!';
+            saveState();
+            renderAnalytics();
+
+            if (!abortBroadcastFlag) {
+                triggerHaptic('success');
+                playCompletionChime();
+                showToast('Рассылка успешно завершена!', '✅');
+            }
+        }
+
+        function togglePauseBroadcast() {
+            if (!isBroadcasting) return;
+            isPaused = !isPaused;
+            document.getElementById('pauseResumeBtn').textContent = isPaused ? '▶ Продолжить' : '⏸ Пауза';
+            document.getElementById('broadcastStatusTitle').textContent = isPaused ? 'Рассылка на паузе' : 'Рассылка выполняется...';
+        }
+
+        function stopBroadcast() {
+            if (!isBroadcasting) return;
+            abortBroadcastFlag = true;
+            isPaused = false;
+        }
+
+        function appendLiveConsole(text, colorHex) {
+            const box = document.getElementById('liveStreamLog');
+            const row = document.createElement('div');
+            const t = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            row.style.color = colorHex;
+            row.textContent = `[${t}] ${text}`;
+            box.prepend(row);
+        }
+
+        // ==================== ЛОГИ И СТАТИСТИКА ====================
+        function addLog(title, handle, type, details, niche = 'Крипта') {
+            state.logs.unshift({
+                id: Date.now() + Math.random(),
+                time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                title,
+                handle,
+                type,
+                niche,
+                details
+            });
+            if (state.logs.length > 150) state.logs.pop();
+        }
+
+        function setLogFilter(filter) {
+            currentLogFilter = filter;
+            document.getElementById('logFilterAll').classList.toggle('active', filter === 'all');
+            document.getElementById('logFilterSuccess').classList.toggle('active', filter === 'success');
+            document.getElementById('logFilterError').classList.toggle('active', filter === 'error');
+            renderLogs();
+        }
+
+        function renderLogs() {
+            document.getElementById('statTotal').textContent = state.stats.total;
+            document.getElementById('statSuccess').textContent = state.stats.success;
+            document.getElementById('statErrors').textContent = state.stats.errors;
+
+            const container = document.getElementById('logsHistoryContainer');
+            const filtered = state.logs.filter(l => currentLogFilter === 'all' || l.type === currentLogFilter);
+
+            if (!filtered.length) {
+                container.innerHTML = `<div class="sub-box" style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">Записей пока нет.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => `
+                <div class="sub-box" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;border-color:${item.type === 'error' ? 'rgba(251,191,36,0.35)' : 'var(--border)'};">
+                    <div style="min-width:0;">
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                            <span>${item.type === 'success' ? '✅' : '⏭'}</span>
+                            <span style="font-weight:700;font-size:12px;color:#fff;">${escapeHtml(item.title)}</span>
+                            <span style="font-size:11px;color:#f0abfc;">(${escapeHtml(item.handle)})</span>
+                        </div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:3px;">${escapeHtml(item.details)}</div>
+                    </div>
+                    <span style="font-family:monospace;font-size:10px;color:var(--muted);flex-shrink:0;">${item.time}</span>
+                </div>
+            `).join('');
+        }
+
+        function clearLogs() {
+            state.logs = [];
+            state.stats = { total: 0, success: 0, errors: 0 };
+            state.abStats = { A: { sent: 0 }, B: { sent: 0 } };
+            saveState();
+            renderLogs();
+            renderAnalytics();
+            showToast('Логи очищены', '🗑️');
+        }
+
+        function renderAnalytics() {
+            document.getElementById('analyticsRunsCount').textContent = state.runHistory.length;
+            document.getElementById('analyticsSentTotal').textContent = state.stats.success;
+            const rate = state.stats.total > 0 ? Math.round((state.stats.success / state.stats.total) * 100) : 100;
+            document.getElementById('analyticsDeliveryRate').textContent = `${rate}%`;
+            document.getElementById('analyticsBlacklistCount').textContent = state.blacklist.length;
+
+            // Сравнение A/B
+            const abBox = document.getElementById('abComparisonBox');
+            const badge = document.getElementById('abLeaderBadge');
+            const sentA = state.abStats.A.sent;
+            const sentB = state.abStats.B.sent;
+            const totalAb = sentA + sentB;
+
+            if (totalAb === 0) {
+                badge.textContent = 'Нет данных';
+                abBox.innerHTML = `<div class="sub-box" style="grid-column:1/-1;text-align:center;padding:18px;color:var(--muted);font-size:12px;">Включите «A/B-тест постов» в конструкторе и запустите рассылку, чтобы сравнить Вариант А и Вариант Б.</div>`;
+            } else {
+                const shareA = Math.round((sentA / totalAb) * 100);
+                const shareB = 100 - shareA;
+                badge.textContent = `Протестировано: ${totalAb} смс`;
+                abBox.innerHTML = `
+                    <div class="sub-box" style="display:flex;flex-direction:column;gap:6px;">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;">
+                            <span style="font-weight:700;color:#fff;">Вариант А</span>
+                            <span style="font-weight:800;color:#d8b4fe;">${sentA} (${shareA}%)</span>
+                        </div>
+                        <div class="progress-track"><div class="progress-fill" style="width:${shareA}%;"></div></div>
+                        <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml((state.variants.A.message || '').replace(/<[^>]+>/g, '').slice(0, 48))}</div>
+                    </div>
+                    <div class="sub-box" style="display:flex;flex-direction:column;gap:6px;">
+                        <div style="display:flex;justify-content:space-between;font-size:12px;">
+                            <span style="font-weight:700;color:#fff;">Вариант Б</span>
+                            <span style="font-weight:800;color:#f0abfc;">${sentB} (${shareB}%)</span>
+                        </div>
+                        <div class="progress-track"><div class="progress-fill" style="width:${shareB}%;"></div></div>
+                        <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml((state.variants.B.message || '').replace(/<[^>]+>/g, '').slice(0, 48))}</div>
+                    </div>
+                `;
+            }
+
+            // График по нишам
+            const bars = document.getElementById('nicheStatsBars');
+            const counts = {};
+            NICHES.forEach(n => counts[n] = 0);
+            state.logs.filter(l => l.type === 'success').forEach(l => {
+                if (counts[l.niche] !== undefined) counts[l.niche]++;
+            });
+            const maxVal = Math.max(1, ...Object.values(counts));
+
+            bars.innerHTML = NICHES.map(niche => {
+                const cnt = counts[niche];
+                const pct = cnt > 0 ? Math.max(12, Math.round((cnt / maxVal) * 100)) : 4;
+                return `
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+                            <span style="font-weight:600;color:#f3e8ff;">${niche}</span>
+                            <span style="font-weight:700;color:#f0abfc;">${cnt} отправок</span>
+                        </div>
+                        <div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
+                    </div>
+                `;
+            }).join('');
+
+            // История запусков
+            const hist = document.getElementById('runHistoryContainer');
+            if (!state.runHistory.length) {
+                hist.innerHTML = `<div class="sub-box" style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">История запусков пуста.</div>`;
+                return;
+            }
+            hist.innerHTML = state.runHistory.map(run => `
+                <div class="sub-box" style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                    <div style="min-width:0;">
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                            <span style="font-weight:700;font-size:12px;color:#fff;">${run.date}</span>
+                            <span class="tag-badge" style="color:#6ee7b7;border-color:rgba(52,211,153,0.35);">${run.chatsCount} чатов</span>
+                            ${run.abMode ? `<span class="tag-badge folder">A/B</span>` : ''}
+                        </div>
+                        <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;">${escapeHtml(run.preview)}...</div>
+                    </div>
+                    <button type="button" onclick="repeatPreviousRun('${run.id}')" class="btn btn-soft" style="flex-shrink:0;">Повторить</button>
+                </div>
+            `).join('');
+        }
+
+        function repeatPreviousRun(runId) {
+            const run = state.runHistory.find(r => r.id === runId);
+            if (!run) return;
+            const set = new Set(run.handles);
+            state.chats.forEach(c => {
+                c.selected = set.has(c.handle) && !state.blacklist.includes(c.handle);
+            });
+            saveState();
+            renderChats();
+            switchTab('broadcast');
+            showToast('Чаты из прошлого запуска выбраны', '🚀');
+        }
+
+        function clearRunHistory() {
+            state.runHistory = [];
+            saveState();
+            renderAnalytics();
+            showToast('История запусков очищена', '🗑️');
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // Инициализация Drag & Drop для загрузки баннера
+        function initBannerDragAndDrop() {
+            const dz = document.getElementById('bannerDropZone');
+            if (!dz) return;
+            ['dragenter', 'dragover'].forEach(evtName => {
+                dz.addEventListener(evtName, e => {
+                    e.preventDefault();
+                    dz.classList.add('dragover');
+                });
+            });
+            ['dragleave', 'drop'].forEach(evtName => {
+                dz.addEventListener(evtName, e => {
+                    e.preventDefault();
+                    dz.classList.remove('dragover');
+                });
+            });
+            dz.addEventListener('drop', e => {
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    processUploadedImageFile(e.dataTransfer.files[0]);
+                }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initTelegramMiniApp();
+            initBannerDragAndDrop();
+            loadState();
+        });
+    </script>
+</body>
+</html>
